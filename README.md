@@ -23,7 +23,7 @@ npm install
 2. **Configure environment variables:**
 
 - Copy `.env.example` to `.env` and adjust values as needed.
-- See the [Configuration Guide](docs/configuration.md) for details.
+- See the [Configuration Guide](docs/configuration-guide.md) for details.
 
 3. **Run the application:**
 
@@ -47,35 +47,38 @@ npm run start
 | npm run test:e2e     | Run end-to-end tests                         |
 | npm run test:cov     | Run test coverage                            |
 
-## Configuration
-
-Application configuration is managed via environment variables. For a full list of available variables, their descriptions, and default values, see the [Configuration Guide](docs/configuration.md).
-
 ## Project Structure
 
 ```
-├── src/                # Main application source code
-│   ├── app.controller.ts
-│   ├── app.controller.spec.ts
-│   ├── app.module.ts
-│   ├── app.service.ts
-│   ├── main.ts
-│   └── config/         # Configuration-related code
-│       └── configuration.ts
-├── test/               # End-to-end tests
-│   ├── app.e2e-spec.ts
-│   └── jest-e2e.json
-├── .env.example        # Example environment variables
-├── .env                # Your local environment variables (not committed)
-├── package.json        # Project metadata and scripts
-├── tsconfig.json       # TypeScript configuration
-├── nest-cli.json       # NestJS CLI configuration
-├── README.md           # Project documentation
-└── docs/
-   └── configuration.md # Configuration documentation
+├── src/                            # Main application source code
+│   ├── app.controller.ts           # App controller
+│   ├── app.controller.spec.ts      # App controller tests
+│   ├── app.module.ts               # App module
+│   ├── app.service.ts              # App service
+│   ├── main.ts                     # Application entry point
+│   └── config/                     # Configuration-related code
+│       └── configuration.ts        # Configuration loader
+├── test/                           # End-to-end tests
+│   ├── app.e2e-spec.ts             # E2E test spec
+│   └── jest-e2e.json               # Jest E2E config
+├── .env.example                    # Example environment variables
+├── package.json                    # Project metadata and scripts
+├── tsconfig.json                   # TypeScript configuration
+├── nest-cli.json                   # NestJS CLI configuration
+├── README.md                       # Project documentation
+├── .github/                        # GitHub Actions workflows and settings
+└── docs/                           # Project documentation
+   ├── configuration-guide.md       # Configuration guide
+   └── devops-guide.md              # DevOps guide
 ```
 
----
+## Configuration Guide
+
+Application configuration is managed via environment variables. For a full list of available variables, their descriptions, and default values, see the [Configuration Guide](docs/configuration-guide.md).
+
+## DevOps Guide
+
+For information on CI/CD, deployment, and operational best practices, see the [DevOps Guide](docs/devops-guide.md).
 
 ## Additional Information
 

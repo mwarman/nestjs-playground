@@ -1,6 +1,6 @@
-# Application Configuration
+# Application Configuration Guide
 
-This document explains how to configure the NestJS Playground application. Proper configuration ensures the application runs as expected in different environments (development, staging, production).
+This document explains how to configure the application. Proper configuration ensures the application runs as expected in different environments, for example development, quality, staging, or production.
 
 ## Getting Started
 
@@ -23,6 +23,22 @@ The following environment variables are available for configuration:
 | ------------- | ------------------------------------------- | ------------- |
 | APP_PORT      | The port on which the application will run. | 3001          |
 | LOGGING_LEVEL | The logging level for the application.      | debug         |
+
+## Environment Variable Precedence in NestJS
+
+NestJS applications resolve environment variables using the following precedence order:
+
+1. **Process Environment (`process.env`)**: Values set in the running environment (e.g., via shell, Docker, CI/CD) override all others.
+2. **`.env` File**: Variables defined in the `.env` file in the project root are loaded at startup if not already set in `process.env`.
+3. **Default Values in Code**: If a variable is not set in either `process.env` or `.env`, the application may fall back to defaults defined in the code (e.g., in configuration service or module).
+
+**Note:**
+
+- If a variable is set in multiple places, the value from `process.env` takes precedence.
+- `.env.example` is only a template and is not loaded by the application.
+- For production deployments, environment variables should be set securely at the infrastructure level.
+
+For more details, see the [NestJS documentation on configuration](https://docs.nestjs.com/techniques/configuration).
 
 ### Example `.env` file
 
