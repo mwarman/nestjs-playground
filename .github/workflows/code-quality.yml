@@ -41,7 +41,7 @@ jobs:
           echo "## ESLint Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           npm run lint > eslint-output.txt 2>&1 || true
-          if [ -s eslint-output.txt ]; then
+          if [ $? -eq 0 ]; then
             echo "### Issues Found:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat eslint-output.txt >> $GITHUB_STEP_SUMMARY
