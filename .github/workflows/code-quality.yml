@@ -92,16 +92,16 @@ jobs:
             " >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: TypeScript compilation check
+      - name: Build check
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## TypeScript Compilation" >> $GITHUB_STEP_SUMMARY
+          echo "## Build" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           npm run build > tsc-output.txt 2>&1
           if [ $? -eq 0 ]; then
-            echo "✅ TypeScript compilation successful" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Build successful" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ TypeScript compilation failed:" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Build failed:" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat tsc-output.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
