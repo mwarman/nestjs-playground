@@ -5,8 +5,6 @@ on:
     # Run code quality checks daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
     paths:
