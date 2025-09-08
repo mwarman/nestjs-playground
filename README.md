@@ -76,6 +76,10 @@ npm run start
 
 Application configuration is managed via environment variables. For a full list of available variables, their descriptions, and default values, see the [Configuration Guide](docs/configuration-guide.md).
 
+## Docker Guide
+
+The application can be containerized using Docker for consistent deployment across environments. For comprehensive instructions on building, running, and managing Docker containers, including environment variable configuration and troubleshooting, see the [Docker Guide](docs/docker-guide.md).
+
 ## DevOps Guide
 
 For information on CI/CD, deployment, and operational best practices, see the [DevOps Guide](docs/devops-guide.md).
