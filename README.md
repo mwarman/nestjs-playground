@@ -35,14 +35,14 @@ npm run start
 
 | Script               | Description                                  |
 | -------------------- | -------------------------------------------- |
-| npm run start        | Start the application (development)          |
-| npm run start:dev    | Start in watch mode                          |
-| npm run start:prod   | Start in production mode                     |
 | npm run build        | Compile the TypeScript source code           |
 | npm run clean        | Remove build output and temporary files      |
 | npm run lint         | Run ESLint to check code quality             |
 | npm run format       | Format code using Prettier                   |
 | npm run format:check | Check code formatting without changing files |
+| npm run start        | Start the application (development)          |
+| npm run start:dev    | Start in watch mode                          |
+| npm run start:prod   | Start in production mode                     |
 | npm run test         | Run unit tests                               |
 | npm run test:e2e     | Run end-to-end tests                         |
 | npm run test:cov     | Run test coverage                            |
