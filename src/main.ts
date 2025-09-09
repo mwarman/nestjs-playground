@@ -1,17 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from 'nestjs-pino';
+import { LogLevel } from '@nestjs/common';
 
 import { AppModule } from './app.module';
-import { Config } from './config/configuration';
+import { DEFAULT_LOGGING_LEVEL, Config } from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const logLevel: LogLevel = (process.env.LOGGING_LEVEL as LogLevel) || DEFAULT_LOGGING_LEVEL;
+
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, logger: [logLevel] });
 
   const configService = app.get(ConfigService<Config>);
-
-  const logger = app.get(Logger);
-  app.useLogger(logger);
 
   await app.listen(configService.get<number>('APP_PORT')!);
 }
