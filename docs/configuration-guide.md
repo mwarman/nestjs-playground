@@ -19,10 +19,10 @@ This document explains how to configure the application. Proper configuration en
 
 The following environment variables are available for configuration:
 
-| Name          | Description                                 | Default Value |
-| ------------- | ------------------------------------------- | ------------- |
-| APP_PORT      | The port on which the application will run. | 3001          |
-| LOGGING_LEVEL | The logging level for the application.      | debug         |
+| Name          | Description                                                                                    | Default Value |
+| ------------- | ---------------------------------------------------------------------------------------------- | ------------- |
+| APP_PORT      | The port on which the application will run.                                                    | 3000          |
+| LOGGING_LEVEL | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal | log           |
 
 ## Environment Variable Precedence in NestJS
 
@@ -50,10 +50,10 @@ For more details, see the [NestJS documentation on configuration](https://docs.n
 ############################################################
 
 # Application Settings
-APP_PORT=3001
+APP_PORT=3000
 
 # Logging Settings
-LOGGING_LEVEL=debug
+LOGGING_LEVEL=log
 ```
 
 ## Tips for New Engineers
