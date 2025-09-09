@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { Task } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   private readonly tasks: Task[] = [
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
@@ -40,14 +42,23 @@ export class TasksService {
   ];
 
   findAll(): Task[] {
-    return this.tasks;
+    this.logger.log('> findAll');
+    const tasks = this.tasks;
+    this.logger.debug(`findAll: returning ${tasks.length} tasks`);
+    this.logger.log('< findAll');
+    return tasks;
   }
 
   findOne(id: string): Task {
+    this.logger.log(`> findOne: ${id}`);
     const task = this.tasks.find((task) => task.id === id);
+    this.logger.debug(`findOne: ${id} found: ${!!task}`);
+
     if (!task) {
+      this.logger.warn(`Task with ID ${id} not found`);
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
+    this.logger.log(`< findOne: ${id}`);
     return task;
   }
 }

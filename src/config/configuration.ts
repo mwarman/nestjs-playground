@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const DEFAULT_APP_PORT = 3000;
-export const DEFAULT_LOGGING_LEVEL = 'info';
+export const DEFAULT_LOGGING_LEVEL = 'log';
 
 const configSchema = z.object({
   APP_PORT: z.coerce.number().min(1).max(65535).default(DEFAULT_APP_PORT),
-  LOGGING_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default(DEFAULT_LOGGING_LEVEL),
+  LOGGING_LEVEL: z.enum(['verbose', 'debug', 'log', 'warn', 'error', 'fatal']).default(DEFAULT_LOGGING_LEVEL),
 });
 
 export type Config = z.infer<typeof configSchema>;

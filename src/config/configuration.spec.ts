@@ -85,7 +85,7 @@ describe('Configuration', () => {
 
     it('should accept all valid logging levels', () => {
       // Arrange
-      const validLevels = ['debug', 'info', 'warn', 'error'];
+      const validLevels = ['debug', 'log', 'warn', 'error'];
 
       // Act & Assert
       validLevels.forEach((level) => {
@@ -139,7 +139,7 @@ describe('Configuration', () => {
 
       // Act & Assert
       expect(() => validate(input)).toThrow(
-        'Config validation error: LOGGING_LEVEL - Invalid option: expected one of "debug"|"info"|"warn"|"error"',
+        'Config validation error: LOGGING_LEVEL - Invalid option: expected one of "verbose"|"debug"|"log"|"warn"|"error"|"fatal"',
       );
     });
 
@@ -166,7 +166,7 @@ describe('Configuration', () => {
       expect(() => validate(input)).toThrow('Config validation error:');
       expect(() => validate(input)).toThrow('APP_PORT - Too small: expected number to be >=1');
       expect(() => validate(input)).toThrow(
-        'LOGGING_LEVEL - Invalid option: expected one of "debug"|"info"|"warn"|"error"',
+        'LOGGING_LEVEL - Invalid option: expected one of "verbose"|"debug"|"log"|"warn"|"error"|"fatal"',
       );
     });
 
@@ -174,7 +174,7 @@ describe('Configuration', () => {
       // Arrange
       const input = {
         APP_PORT: 3000,
-        LOGGING_LEVEL: 'info',
+        LOGGING_LEVEL: 'log',
         EXTRA_PROPERTY: 'should be ignored',
         ANOTHER_EXTRA: 123,
       };
@@ -185,7 +185,7 @@ describe('Configuration', () => {
       // Assert
       expect(result).toEqual({
         APP_PORT: 3000,
-        LOGGING_LEVEL: 'info',
+        LOGGING_LEVEL: 'log',
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');
@@ -201,7 +201,7 @@ describe('Configuration', () => {
 
     it('should export DEFAULT_LOGGING_LEVEL with correct value', () => {
       // Arrange & Act & Assert
-      expect(DEFAULT_LOGGING_LEVEL).toBe('info');
+      expect(DEFAULT_LOGGING_LEVEL).toBe('log');
       expect(typeof DEFAULT_LOGGING_LEVEL).toBe('string');
     });
   });
@@ -220,7 +220,7 @@ describe('Configuration', () => {
       // Assert
       expect(typeof result.APP_PORT).toBe('number');
       expect(typeof result.LOGGING_LEVEL).toBe('string');
-      expect(['debug', 'info', 'warn', 'error']).toContain(result.LOGGING_LEVEL);
+      expect(['debug', 'log', 'warn', 'error']).toContain(result.LOGGING_LEVEL);
     });
   });
 });
