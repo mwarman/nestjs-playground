@@ -84,6 +84,10 @@ The application can be containerized using Docker for consistent deployment acro
 
 For information on CI/CD, deployment, and operational best practices, see the [DevOps Guide](docs/devops-guide.md).
 
+## API Documentation Guide
+
+For details on how to view and use the automatically generated Swagger and OpenAPI documentation, see the [API Documentation Guide](docs/api-documentation-guide.md).
+
 ## Additional Information
 
 For more information, see the [NestJS Documentation](https://docs.nestjs.com/).
