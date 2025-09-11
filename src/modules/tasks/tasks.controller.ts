@@ -6,7 +6,7 @@ import { GetTaskParamsDto } from './dto/get-task-params.dto';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
-@ApiTags('tasks')
+@ApiTags('Tasks')
 export class TasksController {
   private readonly logger = new Logger(TasksController.name);
 
