@@ -16,9 +16,9 @@ export class TasksController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Fetch all tasks' })
   @ApiResponse({ status: 200, description: 'List of all tasks', type: [Task] })
-  findAll(): Task[] {
+  async findAll(): Promise<Task[]> {
     this.logger.log('> findAll');
-    const tasks = this.tasksService.findAll();
+    const tasks = await this.tasksService.findAll();
     this.logger.log('< findAll');
     return tasks;
   }
@@ -28,9 +28,9 @@ export class TasksController {
   @ApiOperation({ summary: 'Fetch a specific task by its ID' })
   @ApiOkResponse({ description: 'The task with the specified ID', type: Task })
   @ApiNotFoundResponse({ description: 'Task not found' })
-  findOne(@Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto): Task {
+  async findOne(@Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto): Promise<Task> {
     this.logger.log(`> findOne: ${params.taskId}`);
-    const task = this.tasksService.findOne(params.taskId);
+    const task = await this.tasksService.findOne(params.taskId);
     this.logger.log(`< findOne: ${params.taskId}`);
     return task;
   }
