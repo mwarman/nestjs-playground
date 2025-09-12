@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 /**
  * Represents a task in the system.
@@ -7,12 +8,14 @@ import { ApiProperty } from '@nestjs/swagger';
  * due dates and descriptions. Each task maintains audit information about
  * when it was created and last updated.
  */
+@Entity()
 export class Task {
   /**
    * Unique identifier for the task.
    * @example "550e8400-e29b-41d4-a716-446655440001"
    */
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440001', description: 'Identifier for the task' })
+  @PrimaryGeneratedColumn('uuid')
   id: string; // a UUID
 
   /**
@@ -20,6 +23,7 @@ export class Task {
    * @example "Complete project documentation"
    */
   @ApiProperty({ example: 'Complete project documentation', description: 'Brief description of the task' })
+  @Column({ type: 'varchar', length: 500 })
   summary: string;
 
   /**
@@ -31,6 +35,7 @@ export class Task {
     description: 'Detailed description of the task',
     required: false,
   })
+  @Column({ type: 'text', nullable: true })
   description?: string;
 
   /**
@@ -42,13 +47,15 @@ export class Task {
     description: 'Optional due date for task completion',
     required: false,
   })
-  dueAt?: string; // an ISO8601 timestamp
+  @Column({ type: 'timestamp with time zone', nullable: true })
+  dueAt?: Date; // Changed to Date type for better TypeORM integration
 
   /**
    * Indicates whether the task has been completed.
    * @example false
    */
   @ApiProperty({ example: false, description: 'Indicates if the task is complete', default: false })
+  @Column({ type: 'boolean', default: false })
   isComplete: boolean;
 
   /**
@@ -56,7 +63,8 @@ export class Task {
    * @example "2025-09-01T08:00:00.000Z"
    */
   @ApiProperty({ example: '2025-09-01T08:00:00.000Z', description: 'Timestamp when the task was created' })
-  createdAt: string; // an ISO8601 timestamp when the task was created
+  @CreateDateColumn({ type: 'timestamp with time zone' })
+  createdAt: Date; // Changed to Date type for better TypeORM integration
 
   /**
    * Optional timestamp when the task was last updated.
@@ -67,5 +75,6 @@ export class Task {
     description: 'Timestamp when the task was last updated',
     required: false,
   })
-  updatedAt?: string; // an ISO8601 timestamp when the task was last updated
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
+  updatedAt: Date; // Changed to Date type for better TypeORM integration
 }

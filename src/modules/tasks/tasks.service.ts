@@ -1,4 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 import { Task } from './entities/task.entity';
 
@@ -6,52 +8,22 @@ import { Task } from './entities/task.entity';
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  private readonly tasks: Task[] = [
-    {
-      id: '550e8400-e29b-41d4-a716-446655440001',
-      summary: 'Complete project documentation',
-      description: 'Write comprehensive documentation for the NestJS playground project',
-      dueAt: '2025-09-15T10:00:00.000Z',
-      isComplete: false,
-      createdAt: '2025-09-01T08:00:00.000Z',
-      updatedAt: '2025-09-02T09:30:00.000Z',
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440002',
-      summary: 'Review code quality',
-      description: 'Perform code review and ensure adherence to coding standards',
-      isComplete: true,
-      createdAt: '2025-08-28T14:00:00.000Z',
-      updatedAt: '2025-09-01T16:45:00.000Z',
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440003',
-      summary: 'Setup CI/CD pipeline',
-      dueAt: '2025-09-20T12:00:00.000Z',
-      isComplete: false,
-      createdAt: '2025-09-03T10:15:00.000Z',
-    },
-    {
-      id: '550e8400-e29b-41d4-a716-446655440004',
-      summary: 'Update dependencies',
-      description: 'Update all npm packages to latest stable versions',
-      isComplete: false,
-      createdAt: '2025-09-05T11:30:00.000Z',
-      updatedAt: '2025-09-06T13:20:00.000Z',
-    },
-  ];
+  constructor(
+    @InjectRepository(Task)
+    private readonly taskRepository: Repository<Task>,
+  ) {}
 
-  findAll(): Task[] {
+  async findAll(): Promise<Task[]> {
     this.logger.log('> findAll');
-    const tasks = this.tasks;
+    const tasks = await this.taskRepository.find();
     this.logger.debug(`findAll: returning ${tasks.length} tasks`);
     this.logger.log('< findAll');
     return tasks;
   }
 
-  findOne(id: string): Task {
+  async findOne(id: string): Promise<Task> {
     this.logger.log(`> findOne: ${id}`);
-    const task = this.tasks.find((task) => task.id === id);
+    const task = await this.taskRepository.findOne({ where: { id } });
     this.logger.debug(`findOne: ${id} found: ${!!task}`);
 
     if (!task) {
@@ -60,5 +32,32 @@ export class TasksService {
     }
     this.logger.log(`< findOne: ${id}`);
     return task;
+  }
+
+  async create(taskData: Partial<Task>): Promise<Task> {
+    this.logger.log('> create');
+    const task = this.taskRepository.create(taskData);
+    const savedTask = await this.taskRepository.save(task);
+    this.logger.debug(`create: created task with ID ${savedTask.id}`);
+    this.logger.log('< create');
+    return savedTask;
+  }
+
+  async update(id: string, taskData: Partial<Task>): Promise<Task> {
+    this.logger.log(`> update: ${id}`);
+    const task = await this.findOne(id);
+    Object.assign(task, taskData);
+    const updatedTask = await this.taskRepository.save(task);
+    this.logger.debug(`update: updated task with ID ${updatedTask.id}`);
+    this.logger.log(`< update: ${id}`);
+    return updatedTask;
+  }
+
+  async remove(id: string): Promise<void> {
+    this.logger.log(`> remove: ${id}`);
+    const task = await this.findOne(id);
+    await this.taskRepository.remove(task);
+    this.logger.debug(`remove: removed task with ID ${id}`);
+    this.logger.log(`< remove: ${id}`);
   }
 }

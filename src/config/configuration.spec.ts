@@ -1,4 +1,14 @@
-import { validate, Config, DEFAULT_APP_PORT, DEFAULT_LOGGING_LEVEL } from './configuration';
+import {
+  validate,
+  Config,
+  DEFAULT_APP_PORT,
+  DEFAULT_LOGGING_LEVEL,
+  DEFAULT_DB_HOST,
+  DEFAULT_DB_PORT,
+  DEFAULT_DB_USER,
+  DEFAULT_DB_PASS,
+  DEFAULT_DB_DATABASE,
+} from './configuration';
 
 describe('Configuration', () => {
   describe('validate', () => {
@@ -17,6 +27,11 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: DEFAULT_APP_PORT,
         LOGGING_LEVEL: DEFAULT_LOGGING_LEVEL,
+        DB_HOST: DEFAULT_DB_HOST,
+        DB_PORT: DEFAULT_DB_PORT,
+        DB_USER: DEFAULT_DB_USER,
+        DB_PASS: DEFAULT_DB_PASS,
+        DB_DATABASE: DEFAULT_DB_DATABASE,
       });
     });
 
@@ -34,6 +49,11 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 8080,
         LOGGING_LEVEL: 'debug',
+        DB_HOST: DEFAULT_DB_HOST,
+        DB_PORT: DEFAULT_DB_PORT,
+        DB_USER: DEFAULT_DB_USER,
+        DB_PASS: DEFAULT_DB_PASS,
+        DB_DATABASE: DEFAULT_DB_DATABASE,
       });
     });
 
@@ -51,6 +71,11 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 5000,
         LOGGING_LEVEL: 'warn',
+        DB_HOST: DEFAULT_DB_HOST,
+        DB_PORT: DEFAULT_DB_PORT,
+        DB_USER: DEFAULT_DB_USER,
+        DB_PASS: DEFAULT_DB_PASS,
+        DB_DATABASE: DEFAULT_DB_DATABASE,
       });
       expect(typeof result.APP_PORT).toBe('number');
     });
@@ -186,6 +211,11 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 3000,
         LOGGING_LEVEL: 'log',
+        DB_HOST: DEFAULT_DB_HOST,
+        DB_PORT: DEFAULT_DB_PORT,
+        DB_USER: DEFAULT_DB_USER,
+        DB_PASS: DEFAULT_DB_PASS,
+        DB_DATABASE: DEFAULT_DB_DATABASE,
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');
@@ -195,7 +225,7 @@ describe('Configuration', () => {
   describe('Constants', () => {
     it('should export DEFAULT_APP_PORT with correct value', () => {
       // Arrange & Act & Assert
-      expect(DEFAULT_APP_PORT).toBe(3000);
+      expect(DEFAULT_APP_PORT).toBe(3001);
       expect(typeof DEFAULT_APP_PORT).toBe('number');
     });
 

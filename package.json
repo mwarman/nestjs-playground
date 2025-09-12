@@ -19,7 +19,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm -- -d src/config/typeorm.config.ts migration:generate",
+    "migration:run": "npm run typeorm -- -d src/config/typeorm.config.ts migration:run",
+    "migration:revert": "npm run typeorm -- -d src/config/typeorm.config.ts migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "11.1.6",
@@ -28,11 +32,14 @@
     "@nestjs/platform-express": "11.1.6",
     "@nestjs/swagger": "11.2.0",
     "@nestjs/terminus": "11.0.0",
+    "@nestjs/typeorm": "11.0.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.2",
+    "pg": "8.16.3",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "zod": "4.1.7"
+    "typeorm": "0.3.26",
+    "zod": "4.1.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
@@ -43,6 +50,7 @@
     "@types/express": "5.0.3",
     "@types/jest": "30.0.0",
     "@types/node": "24.3.1",
+    "@types/pg": "8.15.5",
     "@types/supertest": "6.0.3",
     "eslint": "9.35.0",
     "eslint-config-prettier": "10.1.8",
@@ -75,7 +83,8 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.module.ts",
-      "!**/main.ts"
+      "!**/main.ts",
+      "!**/migrations/**"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",

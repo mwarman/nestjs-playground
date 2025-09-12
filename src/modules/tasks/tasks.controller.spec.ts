@@ -13,19 +13,24 @@ describe('TasksController', () => {
       id: '550e8400-e29b-41d4-a716-446655440001',
       summary: 'Test task 1',
       description: 'Test description 1',
+      dueAt: new Date('2025-09-15T10:00:00.000Z'),
       isComplete: false,
-      createdAt: '2025-09-01T08:00:00.000Z',
+      createdAt: new Date('2025-09-01T08:00:00.000Z'),
+      updatedAt: new Date('2025-09-02T09:30:00.000Z'),
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440002',
       summary: 'Test task 2',
+      description: undefined,
+      dueAt: undefined,
       isComplete: true,
-      createdAt: '2025-09-02T08:00:00.000Z',
+      createdAt: new Date('2025-09-02T08:00:00.000Z'),
+      updatedAt: new Date('2025-09-02T08:00:00.000Z'),
     },
   ];
 
   const mockTasksService = {
-    findAll: jest.fn().mockReturnValue(mockTasks),
+    findAll: jest.fn().mockResolvedValue(mockTasks),
     findOne: jest.fn(),
   };
 
@@ -59,24 +64,24 @@ describe('TasksController', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of tasks', () => {
+    it('should return an array of tasks', async () => {
       // Arrange
       // Mock setup completed in beforeEach
 
       // Act
-      const result = controller.findAll();
+      const result = await controller.findAll();
 
       // Assert
       expect(mockTasksService.findAll).toHaveBeenCalled();
       expect(result).toEqual(mockTasks);
     });
 
-    it('should return empty array when no tasks exist', () => {
+    it('should return empty array when no tasks exist', async () => {
       // Arrange
-      mockTasksService.findAll.mockReturnValueOnce([]);
+      mockTasksService.findAll.mockResolvedValueOnce([]);
 
       // Act
-      const result = controller.findAll();
+      const result = await controller.findAll();
 
       // Assert
       expect(mockTasksService.findAll).toHaveBeenCalled();
@@ -85,30 +90,28 @@ describe('TasksController', () => {
   });
 
   describe('findOne', () => {
-    it('should return a task when valid params are provided', () => {
+    it('should return a task when valid params are provided', async () => {
       // Arrange
       const taskId = '550e8400-e29b-41d4-a716-446655440001';
       const expectedTask = mockTasks[0];
-      mockTasksService.findOne.mockReturnValue(expectedTask);
+      mockTasksService.findOne.mockResolvedValue(expectedTask);
 
       // Act
-      const result = controller.findOne({ taskId });
+      const result = await controller.findOne({ taskId });
 
       // Assert
       expect(mockTasksService.findOne).toHaveBeenCalledWith(taskId);
       expect(result).toEqual(expectedTask);
     });
 
-    it('should throw NotFoundException when task is not found', () => {
+    it('should throw NotFoundException when task is not found', async () => {
       // Arrange
       const taskId = '00000000-0000-0000-0000-000000000000';
       const notFoundError = new NotFoundException(`Task with ID ${taskId} not found`);
-      mockTasksService.findOne.mockImplementation(() => {
-        throw notFoundError;
-      });
+      mockTasksService.findOne.mockRejectedValue(notFoundError);
 
       // Act & Assert
-      expect(() => controller.findOne({ taskId })).toThrow(NotFoundException);
+      await expect(controller.findOne({ taskId })).rejects.toThrow(NotFoundException);
       expect(mockTasksService.findOne).toHaveBeenCalledWith(taskId);
     });
   });

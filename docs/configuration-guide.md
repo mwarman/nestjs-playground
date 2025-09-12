@@ -21,8 +21,13 @@ The following environment variables are available for configuration:
 
 | Name          | Description                                                                                    | Default Value |
 | ------------- | ---------------------------------------------------------------------------------------------- | ------------- |
-| APP_PORT      | The port on which the application will run.                                                    | 3000          |
+| APP_PORT      | The port on which the application will run.                                                    | 3001          |
 | LOGGING_LEVEL | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal | log           |
+| DB_HOST       | PostgreSQL database host                                                                       | localhost     |
+| DB_PORT       | PostgreSQL database port                                                                       | 5432          |
+| DB_USER       | PostgreSQL database username                                                                   | nestuser      |
+| DB_PASS       | PostgreSQL database password                                                                   | nestpassword  |
+| DB_DATABASE   | PostgreSQL database name                                                                       | nestdb        |
 
 ## Environment Variable Precedence in NestJS
 
@@ -40,7 +45,7 @@ NestJS applications resolve environment variables using the following precedence
 
 For more details, see the [NestJS documentation on configuration](https://docs.nestjs.com/techniques/configuration).
 
-### Example `.env` file
+## Example `.env` file
 
 ```dotenv
 ############################################################
@@ -50,10 +55,18 @@ For more details, see the [NestJS documentation on configuration](https://docs.n
 ############################################################
 
 # Application Settings
-APP_PORT=3000
+APP_PORT=3001
 
 # Logging Settings
 LOGGING_LEVEL=log
+
+# Database Settings
+# PostgreSQL database connection configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=nestuser
+DB_PASS=nestpassword
+DB_DATABASE=nestdb
 ```
 
 ## Tips for New Engineers
@@ -61,4 +74,5 @@ LOGGING_LEVEL=log
 - Always keep your `.env` file out of version control (it should be in `.gitignore`).
 - Refer to `.env.example` for the latest list of supported variables.
 - If you add new configuration options, update `.env.example` and this documentation.
+- Never commit sensitive credentials to version control.
 - For questions about configuration, ask your team or check the NestJS documentation.

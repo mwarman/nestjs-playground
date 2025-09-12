@@ -80,6 +80,10 @@ Application configuration is managed via environment variables. For a full list 
 
 The application can be containerized using Docker for consistent deployment across environments. For comprehensive instructions on building, running, and managing Docker containers, including environment variable configuration and troubleshooting, see the [Docker Guide](docs/docker-guide.md).
 
+## Docker Compose Guide
+
+For local development, we use Docker Compose to orchestrate the PostgreSQL database and pgAdmin services. See the [Docker Compose Guide](docs/docker-compose-guide.md) for setup instructions, usage, and troubleshooting tips.
+
 ## DevOps Guide
 
 For information on CI/CD, deployment, and operational best practices, see the [DevOps Guide](docs/devops-guide.md).
