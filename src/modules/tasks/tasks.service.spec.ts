@@ -31,6 +31,12 @@ describe('TasksService', () => {
     },
   ];
 
+  const mockQueryBuilder = {
+    delete: jest.fn().mockReturnThis(),
+    from: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+  };
+
   const mockRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
@@ -38,6 +44,8 @@ describe('TasksService', () => {
     save: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    delete: jest.fn(),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   beforeEach(async () => {
@@ -462,6 +470,67 @@ describe('TasksService', () => {
       await expect(service.remove(taskId)).rejects.toThrow('Database removal failed');
       expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
       expect(mockRepository.remove).toHaveBeenCalledWith(existingTask);
+    });
+  });
+
+  describe('removeAll', () => {
+    it('should successfully remove all tasks and return the count', async () => {
+      // Arrange
+      const expectedDeletedCount = 5;
+      mockQueryBuilder.execute.mockResolvedValue({ affected: expectedDeletedCount });
+
+      // Act
+      const result = await service.removeAll();
+
+      // Assert
+      expect(result).toBe(expectedDeletedCount);
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.delete).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.from).toHaveBeenCalledWith(Task);
+      expect(mockQueryBuilder.execute).toHaveBeenCalledWith();
+    });
+
+    it('should return 0 when no tasks are deleted', async () => {
+      // Arrange
+      mockQueryBuilder.execute.mockResolvedValue({ affected: 0 });
+
+      // Act
+      const result = await service.removeAll();
+
+      // Assert
+      expect(result).toBe(0);
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.delete).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.from).toHaveBeenCalledWith(Task);
+      expect(mockQueryBuilder.execute).toHaveBeenCalledWith();
+    });
+
+    it('should handle undefined affected count and return 0', async () => {
+      // Arrange
+      mockQueryBuilder.execute.mockResolvedValue({ affected: undefined });
+
+      // Act
+      const result = await service.removeAll();
+
+      // Assert
+      expect(result).toBe(0);
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.delete).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.from).toHaveBeenCalledWith(Task);
+      expect(mockQueryBuilder.execute).toHaveBeenCalledWith();
+    });
+
+    it('should handle database errors during bulk removal', async () => {
+      // Arrange
+      const deleteError = new Error('Database deletion failed');
+      mockQueryBuilder.execute.mockRejectedValue(deleteError);
+
+      // Act & Assert
+      await expect(service.removeAll()).rejects.toThrow('Database deletion failed');
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.delete).toHaveBeenCalledWith();
+      expect(mockQueryBuilder.from).toHaveBeenCalledWith(Task);
+      expect(mockQueryBuilder.execute).toHaveBeenCalledWith();
     });
   });
 });

@@ -77,4 +77,13 @@ export class TasksService {
     this.logger.debug(`remove: removed task with ID ${id}`);
     this.logger.log(`< remove: ${id}`);
   }
+
+  async removeAll(): Promise<number> {
+    this.logger.log('> removeAll');
+    const result = await this.taskRepository.createQueryBuilder().delete().from(Task).execute();
+    const deletedCount = result.affected || 0;
+    this.logger.debug(`removeAll: removed ${deletedCount} tasks`);
+    this.logger.log('< removeAll');
+    return deletedCount;
+  }
 }

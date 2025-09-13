@@ -16,6 +16,7 @@ const configSchema = z.object({
   DB_USER: z.string().default(DEFAULT_DB_USER),
   DB_PASS: z.string().default(DEFAULT_DB_PASS),
   DB_DATABASE: z.string().default(DEFAULT_DB_DATABASE),
+  SCHEDULE_TASK_CLEANUP_CRON: z.string().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;
