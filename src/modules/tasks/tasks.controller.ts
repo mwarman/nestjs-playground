@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Param, Post, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Param,
+  Post,
+  UseInterceptors,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -15,6 +27,7 @@ import { TasksService } from './tasks.service';
 
 @Controller('tasks')
 @ApiTags('Tasks')
+@UseInterceptors(ClassSerializerInterceptor)
 export class TasksController {
   private readonly logger = new Logger(TasksController.name);
 

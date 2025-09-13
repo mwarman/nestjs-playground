@@ -61,8 +61,9 @@ describe('TasksController (e2e)', () => {
         summary: createTaskDto.summary,
         isComplete: false,
       });
-      expect(response.body.description).toBeNull();
-      expect(response.body.dueAt).toBeNull();
+      // These fields should not be present in the JSON response when they are null in the database
+      expect(response.body).not.toHaveProperty('description');
+      expect(response.body).not.toHaveProperty('dueAt');
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('createdAt');
       expect(response.body).toHaveProperty('updatedAt');
