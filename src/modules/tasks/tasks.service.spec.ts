@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { TasksService } from './tasks.service';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -35,6 +36,7 @@ describe('TasksService', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -247,6 +249,170 @@ describe('TasksService', () => {
       expect(result.isComplete).toBe(false);
       expect(mockRepository.create).toHaveBeenCalledWith(createTaskDto);
       expect(mockRepository.save).toHaveBeenCalledWith(createdTask);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a task successfully with all fields', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated task summary',
+        description: 'Updated description',
+        dueAt: '2025-09-20T10:00:00.000Z',
+        isComplete: true,
+      };
+
+      const updatedTask = {
+        ...existingTask,
+        summary: updateTaskDto.summary!,
+        description: updateTaskDto.description,
+        dueAt: new Date(updateTaskDto.dueAt!),
+        isComplete: updateTaskDto.isComplete!,
+      };
+
+      mockRepository.findOne.mockResolvedValueOnce(existingTask); // First call to verify task exists
+      mockRepository.update.mockResolvedValue({ affected: 1 });
+      mockRepository.findOne.mockResolvedValueOnce(updatedTask); // Second call to return updated task
+
+      // Act
+      const result = await service.update(taskId, updateTaskDto);
+
+      // Assert
+      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(mockRepository.findOne).toHaveBeenNthCalledWith(1, { where: { id: taskId } });
+      expect(mockRepository.update).toHaveBeenCalledWith(taskId, {
+        summary: updateTaskDto.summary,
+        description: updateTaskDto.description,
+        dueAt: new Date(updateTaskDto.dueAt!),
+        isComplete: updateTaskDto.isComplete,
+      });
+      expect(mockRepository.findOne).toHaveBeenNthCalledWith(2, { where: { id: taskId } });
+      expect(result).toEqual(updatedTask);
+    });
+
+    it('should update a task with partial data', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary only',
+      };
+
+      const updatedTask = {
+        ...existingTask,
+        summary: updateTaskDto.summary!,
+      };
+
+      mockRepository.findOne.mockResolvedValueOnce(existingTask);
+      mockRepository.update.mockResolvedValue({ affected: 1 });
+      mockRepository.findOne.mockResolvedValueOnce(updatedTask);
+
+      // Act
+      const result = await service.update(taskId, updateTaskDto);
+
+      // Assert
+      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(mockRepository.update).toHaveBeenCalledWith(taskId, {
+        summary: updateTaskDto.summary,
+      });
+      expect(result.summary).toBe(updateTaskDto.summary);
+      expect(result.description).toBe(existingTask.description); // Should remain unchanged
+    });
+
+    it('should convert dueAt string to Date when provided', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        dueAt: '2025-12-25T00:00:00.000Z',
+      };
+
+      const updatedTask = {
+        ...existingTask,
+        dueAt: new Date(updateTaskDto.dueAt!),
+      };
+
+      mockRepository.findOne.mockResolvedValueOnce(existingTask);
+      mockRepository.update.mockResolvedValue({ affected: 1 });
+      mockRepository.findOne.mockResolvedValueOnce(updatedTask);
+
+      // Act
+      const result = await service.update(taskId, updateTaskDto);
+
+      // Assert
+      expect(mockRepository.update).toHaveBeenCalledWith(taskId, {
+        dueAt: new Date(updateTaskDto.dueAt!),
+      });
+      expect(result.dueAt).toBeInstanceOf(Date);
+      expect(result.dueAt).toEqual(new Date(updateTaskDto.dueAt!));
+    });
+
+    it('should not update dueAt when not provided', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary',
+      };
+
+      const updatedTask = {
+        ...existingTask,
+        summary: updateTaskDto.summary!,
+      };
+
+      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepository.update.mockResolvedValue({ affected: 1, generatedMaps: [], raw: [] });
+      mockRepository.findOne
+        .mockResolvedValueOnce(existingTask) // First call to check existence
+        .mockResolvedValueOnce(updatedTask); // Second call to return updated task
+
+      // Act
+      const result = await service.update(taskId, updateTaskDto);
+
+      // Assert
+      expect(result.dueAt).toBe(existingTask.dueAt); // Should remain unchanged
+    });
+
+    it('should throw NotFoundException when task does not exist', async () => {
+      // Arrange
+      const nonExistentId = 'non-existent-id';
+      const updateTaskDto: UpdateTaskDto = {
+        id: nonExistentId,
+        summary: 'Updated summary',
+      };
+
+      mockRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.update(nonExistentId, updateTaskDto)).rejects.toThrow(NotFoundException);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: nonExistentId } });
+      expect(mockRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should handle repository update errors', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary',
+      };
+
+      const updateError = new Error('Database update failed');
+
+      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepository.update.mockRejectedValue(updateError);
+
+      // Act & Assert
+      await expect(service.update(taskId, updateTaskDto)).rejects.toThrow('Database update failed');
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
+      expect(mockRepository.update).toHaveBeenCalled();
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   Logger,
   Param,
   Post,
+  Put,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -23,6 +24,7 @@ import {
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskParamsDto } from './dto/get-task-params.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
@@ -64,6 +66,21 @@ export class TasksController {
     this.logger.log(`> findOne: ${params.taskId}`);
     const task = await this.tasksService.findOne(params.taskId);
     this.logger.log(`< findOne: ${params.taskId}`);
+    return task;
+  }
+
+  @Put(':taskId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a specific task by its ID' })
+  @ApiOkResponse({ description: 'The task has been successfully updated', type: Task })
+  @ApiNotFoundResponse({ description: 'Task not found' })
+  async update(
+    @Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto,
+    @Body(new ValidationPipe({ transform: true })) updateTaskDto: UpdateTaskDto,
+  ): Promise<Task> {
+    this.logger.log(`> update: ${params.taskId}`);
+    const task = await this.tasksService.update(params.taskId, updateTaskDto);
+    this.logger.log(`< update: ${params.taskId}`);
     return task;
   }
 }
