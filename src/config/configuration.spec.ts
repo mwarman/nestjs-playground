@@ -33,6 +33,7 @@ describe('Configuration', () => {
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
       });
+      expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
 
     it('should validate and return config with provided valid values', () => {
@@ -55,6 +56,7 @@ describe('Configuration', () => {
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
       });
+      expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
 
     it('should coerce string port to number', () => {
@@ -78,6 +80,7 @@ describe('Configuration', () => {
         DB_DATABASE: DEFAULT_DB_DATABASE,
       });
       expect(typeof result.APP_PORT).toBe('number');
+      expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
 
     it('should use default APP_PORT when undefined', () => {
@@ -219,6 +222,7 @@ describe('Configuration', () => {
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');
+      expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
   });
 
