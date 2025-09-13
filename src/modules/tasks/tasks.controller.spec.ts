@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import type { Task } from './entities/task.entity';
 import type { CreateTaskDto } from './dto/create-task.dto';
+import type { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 
@@ -34,6 +35,7 @@ describe('TasksController', () => {
     findAll: jest.fn().mockResolvedValue(mockTasks),
     findOne: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -213,6 +215,102 @@ describe('TasksController', () => {
       // Act & Assert
       await expect(controller.create(createTaskDto)).rejects.toThrow('Database connection failed');
       expect(mockTasksService.create).toHaveBeenCalledWith(createTaskDto);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a task successfully', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated task summary',
+        description: 'Updated description',
+        isComplete: true,
+      };
+
+      const params = { taskId };
+      const expectedTask: Task = {
+        id: taskId,
+        summary: updateTaskDto.summary!,
+        description: updateTaskDto.description,
+        dueAt: undefined,
+        isComplete: updateTaskDto.isComplete!,
+        createdAt: new Date('2025-09-01T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-13T10:00:00.000Z'),
+      };
+
+      mockTasksService.update.mockResolvedValue(expectedTask);
+
+      // Act
+      const result = await controller.update(params, updateTaskDto);
+
+      // Assert
+      expect(mockTasksService.update).toHaveBeenCalledWith(taskId, updateTaskDto);
+      expect(result).toEqual(expectedTask);
+    });
+
+    it('should handle partial updates correctly', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Only summary updated',
+      };
+
+      const params = { taskId };
+      const expectedTask: Task = {
+        id: taskId,
+        summary: updateTaskDto.summary!,
+        description: 'Original description',
+        dueAt: undefined,
+        isComplete: false,
+        createdAt: new Date('2025-09-01T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-13T10:00:00.000Z'),
+      };
+
+      mockTasksService.update.mockResolvedValue(expectedTask);
+
+      // Act
+      const result = await controller.update(params, updateTaskDto);
+
+      // Assert
+      expect(mockTasksService.update).toHaveBeenCalledWith(taskId, updateTaskDto);
+      expect(result).toEqual(expectedTask);
+    });
+
+    it('should handle task not found error', async () => {
+      // Arrange
+      const taskId = 'non-existent-id';
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary',
+      };
+
+      const params = { taskId };
+      const notFoundError = new NotFoundException(`Task with ID ${taskId} not found`);
+      mockTasksService.update.mockRejectedValue(notFoundError);
+
+      // Act & Assert
+      await expect(controller.update(params, updateTaskDto)).rejects.toThrow(NotFoundException);
+      expect(mockTasksService.update).toHaveBeenCalledWith(taskId, updateTaskDto);
+    });
+
+    it('should handle service errors gracefully', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto: UpdateTaskDto = {
+        id: taskId,
+        summary: 'Task that will fail to update',
+      };
+
+      const params = { taskId };
+      const serviceError = new Error('Database connection failed');
+      mockTasksService.update.mockRejectedValue(serviceError);
+
+      // Act & Assert
+      await expect(controller.update(params, updateTaskDto)).rejects.toThrow('Database connection failed');
+      expect(mockTasksService.update).toHaveBeenCalledWith(taskId, updateTaskDto);
     });
   });
 });

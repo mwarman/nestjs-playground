@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
 
 @Injectable()
@@ -44,11 +45,26 @@ export class TasksService {
     return savedTask;
   }
 
-  async update(id: string, taskData: Partial<Task>): Promise<Task> {
+  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
     this.logger.log(`> update: ${id}`);
-    const task = await this.findOne(id);
-    Object.assign(task, taskData);
-    const updatedTask = await this.taskRepository.save(task);
+    // Verify the task exists before updating
+    await this.findOne(id);
+
+    // Extract the id from the DTO since we don't want to update it
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: dtoId, dueAt, ...updateData } = updateTaskDto;
+
+    // Convert dueAt string to Date if provided
+    const taskUpdateData = {
+      ...updateData,
+      ...(dueAt && { dueAt: new Date(dueAt) }),
+    };
+
+    // Use repository.update() to ensure @UpdateDateColumn is triggered
+    await this.taskRepository.update(id, taskUpdateData);
+
+    // Fetch the updated task to return with the new updatedAt timestamp
+    const updatedTask = await this.findOne(id);
     this.logger.debug(`update: updated task with ID ${updatedTask.id}`);
     this.logger.log(`< update: ${id}`);
     return updatedTask;

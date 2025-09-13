@@ -212,4 +212,173 @@ describe('TasksController (e2e)', () => {
       await request(app.getHttpServer()).get(`/tasks/${invalidId}`).expect(HttpStatus.BAD_REQUEST);
     });
   });
+
+  describe('/tasks/:taskId (PUT)', () => {
+    it('should update a task with all fields', async () => {
+      // Arrange - First create a task
+      const createTaskDto = {
+        summary: 'Original task for update test',
+        description: 'Original description',
+        dueAt: '2025-09-15T10:00:00.000Z',
+        isComplete: false,
+      };
+
+      const createResponse = await request(app.getHttpServer())
+        .post('/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
+
+      const taskId = createResponse.body.id;
+
+      const updateTaskDto = {
+        id: taskId,
+        summary: 'Updated task summary',
+        description: 'Updated description',
+        dueAt: '2025-09-20T10:00:00.000Z',
+        isComplete: true,
+      };
+
+      // Act & Assert
+      const response = await request(app.getHttpServer())
+        .put(`/tasks/${taskId}`)
+        .send(updateTaskDto)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toMatchObject({
+        id: taskId,
+        summary: updateTaskDto.summary,
+        description: updateTaskDto.description,
+        dueAt: updateTaskDto.dueAt,
+        isComplete: updateTaskDto.isComplete,
+      });
+      expect(response.body).toHaveProperty('createdAt');
+      expect(response.body).toHaveProperty('updatedAt');
+    });
+
+    it('should update a task with partial fields', async () => {
+      // Arrange - First create a task
+      const createTaskDto = {
+        summary: 'Original task for partial update',
+        description: 'Original description',
+        isComplete: false,
+      };
+
+      const createResponse = await request(app.getHttpServer())
+        .post('/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
+
+      const taskId = createResponse.body.id;
+
+      const updateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary only',
+      };
+
+      // Act & Assert
+      const response = await request(app.getHttpServer())
+        .put(`/tasks/${taskId}`)
+        .send(updateTaskDto)
+        .expect(HttpStatus.OK);
+
+      expect(response.body).toMatchObject({
+        id: taskId,
+        summary: updateTaskDto.summary,
+      });
+      expect(response.body).toHaveProperty('createdAt');
+      expect(response.body).toHaveProperty('updatedAt');
+
+      // The response should contain the updated summary
+      expect(response.body.summary).toBe(updateTaskDto.summary);
+      expect(response.body.id).toBe(taskId);
+    });
+
+    it('should return 404 for non-existent task', async () => {
+      // Arrange
+      const nonExistentId = '550e8400-e29b-41d4-a716-446655440000';
+      const updateTaskDto = {
+        id: nonExistentId,
+        summary: 'Updated summary',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer())
+        .put(`/tasks/${nonExistentId}`)
+        .send(updateTaskDto)
+        .expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 400 for invalid UUID format in path', async () => {
+      // Arrange
+      const invalidId = 'not-a-uuid';
+      const updateTaskDto = {
+        id: invalidId,
+        summary: 'Updated summary',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${invalidId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 for missing required id field in body', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto = {
+        summary: 'Updated summary without id',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 for invalid id format in body', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto = {
+        id: 'not-a-uuid',
+        summary: 'Updated summary',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 for empty summary when provided', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto = {
+        id: taskId,
+        summary: '',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 for invalid dueAt format', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary',
+        dueAt: 'invalid-date',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 for invalid isComplete type', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const updateTaskDto = {
+        id: taskId,
+        summary: 'Updated summary',
+        isComplete: 'not-a-boolean',
+      };
+
+      // Act & Assert
+      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+    });
+  });
 });
