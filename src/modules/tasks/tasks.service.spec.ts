@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 
 import { TasksService } from './tasks.service';
 import { Task } from './entities/task.entity';
+import { CreateTaskDto } from './dto/create-task.dto';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -32,6 +33,8 @@ describe('TasksService', () => {
   const mockRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -127,6 +130,123 @@ describe('TasksService', () => {
       expect(result).toHaveProperty('summary');
       expect(result).toHaveProperty('isComplete');
       expect(result).toHaveProperty('createdAt');
+    });
+  });
+
+  describe('create', () => {
+    it('should create and return a new task with all fields', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'New test task',
+        description: 'Test description',
+        dueAt: '2025-09-15T10:00:00.000Z',
+        isComplete: false,
+      };
+
+      const createdTask = {
+        id: '550e8400-e29b-41d4-a716-446655440003',
+        summary: createTaskDto.summary,
+        description: createTaskDto.description,
+        dueAt: new Date(createTaskDto.dueAt!),
+        isComplete: createTaskDto.isComplete,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      const savedTask = { ...createdTask };
+
+      mockRepository.create.mockReturnValue(createdTask);
+      mockRepository.save.mockResolvedValue(savedTask);
+
+      // Act
+      const result = await service.create(createTaskDto);
+
+      // Assert
+      expect(mockRepository.create).toHaveBeenCalledWith(createTaskDto);
+      expect(mockRepository.save).toHaveBeenCalledWith(createdTask);
+      expect(result).toEqual(savedTask);
+    });
+
+    it('should create a task with minimal required fields', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Minimal task',
+      };
+
+      const createdTask = {
+        id: '550e8400-e29b-41d4-a716-446655440004',
+        summary: createTaskDto.summary,
+        description: undefined,
+        dueAt: undefined,
+        isComplete: false,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      const savedTask = { ...createdTask };
+
+      mockRepository.create.mockReturnValue(createdTask);
+      mockRepository.save.mockResolvedValue(savedTask);
+
+      // Act
+      const result = await service.create(createTaskDto);
+
+      // Assert
+      expect(mockRepository.create).toHaveBeenCalledWith(createTaskDto);
+      expect(mockRepository.save).toHaveBeenCalledWith(createdTask);
+      expect(result).toEqual(savedTask);
+    });
+
+    it('should handle repository save errors', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Task that will fail to save',
+      };
+
+      const createdTask = {
+        summary: createTaskDto.summary,
+        id: '550e8400-e29b-41d4-a716-446655440005',
+      };
+
+      const saveError = new Error('Database save failed');
+
+      mockRepository.create.mockReturnValue(createdTask);
+      mockRepository.save.mockRejectedValue(saveError);
+
+      // Act & Assert
+      await expect(service.create(createTaskDto)).rejects.toThrow('Database save failed');
+      expect(mockRepository.create).toHaveBeenCalledWith(createTaskDto);
+      expect(mockRepository.save).toHaveBeenCalledWith(createdTask);
+    });
+
+    it('should create task with default isComplete value when not provided', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Task without isComplete',
+        description: 'Some description',
+      };
+
+      const createdTask = {
+        id: '550e8400-e29b-41d4-a716-446655440006',
+        summary: createTaskDto.summary,
+        description: createTaskDto.description,
+        isComplete: false,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      const savedTask = { ...createdTask };
+
+      mockRepository.create.mockReturnValue(createdTask);
+      mockRepository.save.mockResolvedValue(savedTask);
+
+      // Act
+      const result = await service.create(createTaskDto);
+
+      // Assert
+      expect(result.isComplete).toBe(false);
+      expect(mockRepository.create).toHaveBeenCalledWith(createTaskDto);
+      expect(mockRepository.save).toHaveBeenCalledWith(createdTask);
     });
   });
 });

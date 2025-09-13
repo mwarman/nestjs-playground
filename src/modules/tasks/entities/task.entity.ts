@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 /**
@@ -7,6 +8,9 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
  * Tasks are work items that can be tracked for completion with optional
  * due dates and descriptions. Each task maintains audit information about
  * when it was created and last updated.
+ *
+ * Note: Optional fields (description, dueAt) that are null in the database
+ * will be excluded from JSON serialization to provide cleaner API responses.
  */
 @Entity()
 export class Task {
@@ -35,6 +39,7 @@ export class Task {
     description: 'Detailed description of the task',
     required: false,
   })
+  @Transform(({ value }) => (value === null ? undefined : value))
   @Column({ type: 'text', nullable: true })
   description?: string;
 
@@ -47,6 +52,7 @@ export class Task {
     description: 'Optional due date for task completion',
     required: false,
   })
+  @Transform(({ value }) => (value === null ? undefined : value))
   @Column({ type: 'timestamp with time zone', nullable: true })
   dueAt?: Date; // Changed to Date type for better TypeORM integration
 
