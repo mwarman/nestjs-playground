@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -82,5 +84,16 @@ export class TasksController {
     const task = await this.tasksService.update(params.taskId, updateTaskDto);
     this.logger.log(`< update: ${params.taskId}`);
     return task;
+  }
+
+  @Delete(':taskId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a specific task by its ID' })
+  @ApiNoContentResponse({ description: 'The task has been successfully removed' })
+  @ApiNotFoundResponse({ description: 'Task not found' })
+  async remove(@Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto): Promise<void> {
+    this.logger.log(`> remove: ${params.taskId}`);
+    await this.tasksService.remove(params.taskId);
+    this.logger.log(`< remove: ${params.taskId}`);
   }
 }

@@ -84,6 +84,7 @@
       "**/*.(t|j)s",
       "!**/*.module.ts",
       "!**/main.ts",
+      "!**/typeorm.config.ts",
       "!**/migrations/**"
     ],
     "coverageDirectory": "../coverage",
