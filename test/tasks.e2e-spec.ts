@@ -381,4 +381,50 @@ describe('TasksController (e2e)', () => {
       await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
   });
+
+  describe('/tasks/:taskId (DELETE)', () => {
+    it('should remove a task successfully', async () => {
+      // Arrange - First create a task to delete
+      const createTaskDto = {
+        summary: 'Task to be deleted',
+        description: 'This task will be removed in the test',
+        dueAt: '2025-09-20T10:00:00.000Z',
+        isComplete: false,
+      };
+
+      const createResponse = await request(app.getHttpServer())
+        .post('/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
+
+      const createdTaskId = createResponse.body.id;
+
+      // Act & Assert - Delete the task
+      await request(app.getHttpServer()).delete(`/tasks/${createdTaskId}`).expect(HttpStatus.NO_CONTENT);
+
+      // Verify the task was actually deleted
+      await request(app.getHttpServer()).get(`/tasks/${createdTaskId}`).expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 404 when trying to delete a non-existent task', async () => {
+      // Arrange
+      const nonExistentTaskId = '550e8400-e29b-41d4-a716-446655440999';
+
+      // Act & Assert
+      await request(app.getHttpServer()).delete(`/tasks/${nonExistentTaskId}`).expect(HttpStatus.NOT_FOUND);
+    });
+
+    it('should return 400 when taskId is invalid', async () => {
+      // Arrange
+      const invalidTaskId = 'invalid-uuid';
+
+      // Act & Assert
+      await request(app.getHttpServer()).delete(`/tasks/${invalidTaskId}`).expect(HttpStatus.BAD_REQUEST);
+    });
+
+    it('should return 400 when taskId is missing', async () => {
+      // Act & Assert
+      await request(app.getHttpServer()).delete('/tasks/').expect(HttpStatus.NOT_FOUND);
+    });
+  });
 });

@@ -37,6 +37,7 @@ describe('TasksService', () => {
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -413,6 +414,54 @@ describe('TasksService', () => {
       await expect(service.update(taskId, updateTaskDto)).rejects.toThrow('Database update failed');
       expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
       expect(mockRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('remove', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should remove a task successfully when task exists', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepository.remove.mockResolvedValue(existingTask);
+
+      // Act
+      const result = await service.remove(taskId);
+
+      // Assert
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
+      expect(mockRepository.remove).toHaveBeenCalledWith(existingTask);
+      expect(result).toBeUndefined();
+    });
+
+    it('should throw NotFoundException when task to remove does not exist', async () => {
+      // Arrange
+      const taskId = '00000000-0000-0000-0000-000000000000';
+      mockRepository.findOne.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.remove(taskId)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(taskId)).rejects.toThrow(`Task with ID ${taskId} not found`);
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
+      expect(mockRepository.remove).not.toHaveBeenCalled();
+    });
+
+    it('should handle database errors during task removal', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const existingTask = mockTasks[0];
+      const removeError = new Error('Database removal failed');
+      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepository.remove.mockRejectedValue(removeError);
+
+      // Act & Assert
+      await expect(service.remove(taskId)).rejects.toThrow('Database removal failed');
+      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId } });
+      expect(mockRepository.remove).toHaveBeenCalledWith(existingTask);
     });
   });
 });

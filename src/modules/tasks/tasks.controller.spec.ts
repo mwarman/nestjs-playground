@@ -36,6 +36,7 @@ describe('TasksController', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -311,6 +312,46 @@ describe('TasksController', () => {
       // Act & Assert
       await expect(controller.update(params, updateTaskDto)).rejects.toThrow('Database connection failed');
       expect(mockTasksService.update).toHaveBeenCalledWith(taskId, updateTaskDto);
+    });
+  });
+
+  describe('remove', () => {
+    it('should remove a task successfully when valid params are provided', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const params = { taskId };
+      mockTasksService.remove.mockResolvedValue(undefined);
+
+      // Act
+      const result = await controller.remove(params);
+
+      // Assert
+      expect(mockTasksService.remove).toHaveBeenCalledWith(taskId);
+      expect(result).toBeUndefined();
+    });
+
+    it('should throw NotFoundException when task to remove is not found', async () => {
+      // Arrange
+      const taskId = '00000000-0000-0000-0000-000000000000';
+      const params = { taskId };
+      const notFoundError = new NotFoundException(`Task with ID ${taskId} not found`);
+      mockTasksService.remove.mockRejectedValue(notFoundError);
+
+      // Act & Assert
+      await expect(controller.remove(params)).rejects.toThrow(NotFoundException);
+      expect(mockTasksService.remove).toHaveBeenCalledWith(taskId);
+    });
+
+    it('should handle service errors gracefully', async () => {
+      // Arrange
+      const taskId = '550e8400-e29b-41d4-a716-446655440001';
+      const params = { taskId };
+      const serviceError = new Error('Database connection failed');
+      mockTasksService.remove.mockRejectedValue(serviceError);
+
+      // Act & Assert
+      await expect(controller.remove(params)).rejects.toThrow('Database connection failed');
+      expect(mockTasksService.remove).toHaveBeenCalledWith(taskId);
     });
   });
 });
