@@ -1,7 +1,15 @@
-import { Controller, Get, HttpCode, HttpStatus, Logger, Param, ValidationPipe } from '@nestjs/common';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Param, Post, ValidationPipe } from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { Task } from './entities/task.entity';
+import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskParamsDto } from './dto/get-task-params.dto';
 import { TasksService } from './tasks.service';
 
@@ -11,6 +19,17 @@ export class TasksController {
   private readonly logger = new Logger(TasksController.name);
 
   constructor(private readonly tasksService: TasksService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new task' })
+  @ApiCreatedResponse({ description: 'The task has been successfully created', type: Task })
+  async create(@Body(new ValidationPipe({ transform: true })) createTaskDto: CreateTaskDto): Promise<Task> {
+    this.logger.log('> create');
+    const task = await this.tasksService.create(createTaskDto);
+    this.logger.log('< create');
+    return task;
+  }
 
   @Get()
   @HttpCode(HttpStatus.OK)

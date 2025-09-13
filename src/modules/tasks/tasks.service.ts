@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
 
 @Injectable()
@@ -34,9 +35,9 @@ export class TasksService {
     return task;
   }
 
-  async create(taskData: Partial<Task>): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto): Promise<Task> {
     this.logger.log('> create');
-    const task = this.taskRepository.create(taskData);
+    const task = this.taskRepository.create(createTaskDto);
     const savedTask = await this.taskRepository.save(task);
     this.logger.debug(`create: created task with ID ${savedTask.id}`);
     this.logger.log('< create');

@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import type { Task } from './entities/task.entity';
+import type { CreateTaskDto } from './dto/create-task.dto';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 
@@ -32,6 +33,7 @@ describe('TasksController', () => {
   const mockTasksService = {
     findAll: jest.fn().mockResolvedValue(mockTasks),
     findOne: jest.fn(),
+    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -113,6 +115,104 @@ describe('TasksController', () => {
       // Act & Assert
       await expect(controller.findOne({ taskId })).rejects.toThrow(NotFoundException);
       expect(mockTasksService.findOne).toHaveBeenCalledWith(taskId);
+    });
+  });
+
+  describe('create', () => {
+    it('should create a task with all fields provided', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'New test task',
+        description: 'Detailed description',
+        dueAt: '2025-09-15T10:00:00.000Z',
+        isComplete: false,
+      };
+
+      const expectedTask: Task = {
+        id: '550e8400-e29b-41d4-a716-446655440003',
+        summary: 'New test task',
+        description: 'Detailed description',
+        dueAt: new Date('2025-09-15T10:00:00.000Z'),
+        isComplete: false,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      mockTasksService.create.mockResolvedValue(expectedTask);
+
+      // Act
+      const result = await controller.create(createTaskDto);
+
+      // Assert
+      expect(mockTasksService.create).toHaveBeenCalledWith(createTaskDto);
+      expect(result).toEqual(expectedTask);
+    });
+
+    it('should create a task with only required fields', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Minimal test task',
+      };
+
+      const expectedTask: Task = {
+        id: '550e8400-e29b-41d4-a716-446655440004',
+        summary: 'Minimal test task',
+        description: undefined,
+        dueAt: undefined,
+        isComplete: false,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      mockTasksService.create.mockResolvedValue(expectedTask);
+
+      // Act
+      const result = await controller.create(createTaskDto);
+
+      // Assert
+      expect(mockTasksService.create).toHaveBeenCalledWith(createTaskDto);
+      expect(result).toEqual(expectedTask);
+    });
+
+    it('should create a task with isComplete defaulting to false when not provided', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Task without isComplete',
+        description: 'Some description',
+      };
+
+      const expectedTask: Task = {
+        id: '550e8400-e29b-41d4-a716-446655440005',
+        summary: 'Task without isComplete',
+        description: 'Some description',
+        dueAt: undefined,
+        isComplete: false,
+        createdAt: new Date('2025-09-12T08:00:00.000Z'),
+        updatedAt: new Date('2025-09-12T08:00:00.000Z'),
+      };
+
+      mockTasksService.create.mockResolvedValue(expectedTask);
+
+      // Act
+      const result = await controller.create(createTaskDto);
+
+      // Assert
+      expect(mockTasksService.create).toHaveBeenCalledWith(createTaskDto);
+      expect(result).toEqual(expectedTask);
+    });
+
+    it('should handle service errors gracefully', async () => {
+      // Arrange
+      const createTaskDto: CreateTaskDto = {
+        summary: 'Task that will fail',
+      };
+
+      const serviceError = new Error('Database connection failed');
+      mockTasksService.create.mockRejectedValue(serviceError);
+
+      // Act & Assert
+      await expect(controller.create(createTaskDto)).rejects.toThrow('Database connection failed');
+      expect(mockTasksService.create).toHaveBeenCalledWith(createTaskDto);
     });
   });
 });
