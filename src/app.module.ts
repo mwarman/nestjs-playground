@@ -22,7 +22,7 @@ import { HealthModule } from './modules/health/health.module';
         username: configService.get('DB_USER'),
         password: configService.get('DB_PASS'),
         database: configService.get('DB_DATABASE'),
-        ssl: configService.get('DB_SSL'),
+        ssl: configService.get('DB_SSL') ? { rejectUnauthorized: false } : false,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         synchronize: false, // Set to false in production, use migrations instead
