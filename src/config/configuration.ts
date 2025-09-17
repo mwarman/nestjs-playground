@@ -16,6 +16,13 @@ const configSchema = z.object({
   DB_USER: z.string().default(DEFAULT_DB_USER),
   DB_PASS: z.string().default(DEFAULT_DB_PASS),
   DB_DATABASE: z.string().default(DEFAULT_DB_DATABASE),
+  DB_SSL: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      if (val.toLowerCase() === 'false' || val === '0') return false;
+      if (val.toLowerCase() === 'true' || val === '1') return true;
+    }
+    return val;
+  }, z.boolean().default(true)),
   SCHEDULE_TASK_CLEANUP_CRON: z.string().optional(),
 });
 
