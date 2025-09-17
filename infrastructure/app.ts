@@ -43,6 +43,7 @@ const app = new cdk.App();
 
 // Network Stack
 const networkStack = new NetworkStack(app, `${appName}-network-${environment}`, {
+  description: 'Network stack for NestJS Playground',
   env,
   hostedZoneId: process.env.CDK_HOSTED_ZONE_ID!,
   hostedZoneName: process.env.CDK_HOSTED_ZONE_NAME!,
@@ -50,30 +51,30 @@ const networkStack = new NetworkStack(app, `${appName}-network-${environment}`, 
   domainName: process.env.CDK_DOMAIN_NAME!,
   appName,
   environment,
-  description: 'Network stack for NestJS Playground',
 });
 
 // ECR Stack
 const ecrStack = new EcrStack(app, `${appName}-ecr-${environment}`, {
+  description: 'ECR stack for NestJS Playground',
   env,
   appName,
   environment,
-  description: 'ECR stack for NestJS Playground',
 });
 
 // Database Stack
 const databaseStack = new DatabaseStack(app, `${appName}-database-${environment}`, {
+  description: 'Database stack for NestJS Playground',
   env,
   vpc: networkStack.vpc,
   databaseName: process.env.CDK_DATABASE_NAME || 'nestjs_playground',
   databaseUsername: process.env.CDK_DATABASE_USERNAME || 'postgres',
   appName,
   environment,
-  description: 'Database stack for NestJS Playground',
 });
 
 // Compute Stack
 const computeStack = new ComputeStack(app, `${appName}-compute-${environment}`, {
+  description: 'Compute stack for NestJS Playground',
   env,
   vpc: networkStack.vpc,
   repository: ecrStack.repository,
