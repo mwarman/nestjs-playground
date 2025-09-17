@@ -3,6 +3,7 @@
 cdk.out
 *.d.ts
 *.js
+*.js.map
 
 # CDK Context
 cdk.context.json
