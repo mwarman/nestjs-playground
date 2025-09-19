@@ -23,7 +23,8 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- -d src/config/typeorm.config.ts migration:generate",
     "migration:run": "npm run typeorm -- -d src/config/typeorm.config.ts migration:run",
-    "migration:revert": "npm run typeorm -- -d src/config/typeorm.config.ts migration:revert"
+    "migration:revert": "npm run typeorm -- -d src/config/typeorm.config.ts migration:revert",
+    "schema:drop": "npm run typeorm -- -d src/config/typeorm.config.ts schema:drop"
   },
   "dependencies": {
     "@nestjs/common": "11.1.6",

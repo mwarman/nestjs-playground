@@ -25,6 +25,7 @@ import { HealthModule } from './modules/health/health.module';
         ssl: configService.get('DB_SSL') ? { rejectUnauthorized: false } : false,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        migrationsRun: configService.get('DB_MIGRATIONS_RUN'), // Automatically run migrations on startup
         synchronize: false, // Set to false in production, use migrations instead
         logging: true,
       }),

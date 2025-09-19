@@ -32,7 +32,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
-        DB_SSL: false,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
@@ -56,7 +57,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
-        DB_SSL: false,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
@@ -80,7 +82,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
-        DB_SSL: false,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(typeof result.APP_PORT).toBe('number');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
@@ -222,7 +225,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
-        DB_SSL: false,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');
@@ -237,7 +241,7 @@ describe('Configuration', () => {
       const result = validate(input);
 
       // Assert
-      expect(result.DB_SSL).toBe(false);
+      expect(result.DB_SSL).toBe(true);
     });
 
     it('should coerce DB_SSL string to boolean', () => {
