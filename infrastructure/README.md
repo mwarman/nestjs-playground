@@ -14,14 +14,15 @@ infrastructure/
 ├── .env                  # Environment variables (create from .env.example)
 ├── README.md             # This file
 └── stacks/               # CDK stack definitions
-    ├── network.stack.ts  # Network infrastructure (VPC, Route 53, SSL)
-    ├── database.stack.ts # Database infrastructure (Aurora Serverless v2)
-    └── compute.stack.ts  # Compute infrastructure (ECS, ALB, ECR)
+   ├── network.stack.ts  # Network infrastructure (VPC, Route 53, SSL)
+   ├── database.stack.ts # Database infrastructure (Aurora Serverless v2)
+   ├── compute.stack.ts  # Compute infrastructure (ECS, ALB)
+   └── ecr.stack.ts      # ECR repository stack (container registry)
 ```
 
 ## Architecture Overview
 
-The infrastructure is organized into three logical stacks:
+The infrastructure is organized into four logical stacks:
 
 ### 1. Network Stack (`network.stack.ts`)
 
@@ -37,9 +38,16 @@ The infrastructure is organized into three logical stacks:
 - **Secrets**: Managed database credentials in AWS Secrets Manager
 - **Networking**: Deployed in private subnets
 
-### 3. Compute Stack (`compute.stack.ts`)
+### 3. ECR Stack (`ecr.stack.ts`)
 
-- **ECR**: Container registry for application images
+- **ECR Repository**: Creates and manages an Amazon ECR repository for application container images
+- **Image Scanning**: Enables image scan on push for vulnerability detection
+- **Tag Mutability**: Allows mutable image tags
+- **Removal Policy**: Retains repository in production, destroys in non-prod environments
+- **Outputs**: Exports repository URI, name, and ARN for use in other stacks
+
+### 4. Compute Stack (`compute.stack.ts`)
+
 - **ECS Fargate**: Serverless container hosting
 - **Application Load Balancer**: HTTP/HTTPS load balancing with health checks
 - **Auto Scaling**: CPU-based scaling (1-4 instances, 70% CPU threshold)
@@ -132,12 +140,17 @@ The stacks have the following dependencies:
 
 ```
 Network Stack
-    ↓
-Database Stack ← Compute Stack
+   ↓
+Database Stack
+   ↓
+ECR Stack
+   ↓
+Compute Stack
 ```
 
 - **Database Stack** depends on Network Stack (for VPC)
-- **Compute Stack** depends on both Network Stack (for VPC, DNS) and Database Stack (for database connection)
+- **ECR Stack** is independent but typically referenced by Compute Stack for container images
+- **Compute Stack** depends on Network Stack (for VPC, DNS), Database Stack (for database connection), and ECR Stack (for container image repository)
 
 ## Cost Optimization Features
 

@@ -1,6 +1,8 @@
 # Infrastructure Guide
 
-This guide provides a comprehensive overview of the AWS infrastructure for the NestJS Playground application, including architectural decisions, deployment instructions, and operational considerations.
+This guide provides a comprehensive overview of the AWS infrastructure for the NestJS Playground backend application, including architectural decisions, deployment instructions, and operational considerations.
+
+> **Note:** This infrastructure provisions only backend/API components. There is no presentation tier (e.g., web frontend, CloudFront) included. All resources are for backend services and APIs.
 
 ## Table of Contents
 
@@ -17,21 +19,23 @@ This guide provides a comprehensive overview of the AWS infrastructure for the N
 
 ## Architecture Overview
 
-The NestJS Playground application is deployed on AWS using a modern, serverless-first architecture designed for cost optimization, scalability, and maintainability. The infrastructure follows a three-tier pattern:
+The NestJS Playground backend application is deployed on AWS using a modern, serverless-first architecture designed for cost optimization, scalability, and maintainability. The infrastructure is organized into four logical stacks:
 
 ### High-Level Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Presentation  │    │    Application  │    │      Data       │
-│      Tier       │    │      Tier       │    │      Tier       │
-├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ Route 53        │    │ Application     │    │ Aurora Serverless│
-│ CloudFront      │    │ Load Balancer   │    │ v2 PostgreSQL   │
-│ SSL Certificate │    │ ECS Fargate     │    │ Secrets Manager │
-│                 │    │ ECR             │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌───────────────────┐    ┌────────────────────┐
+│  Application    │    │      Data         │    │   Container Image   │
+│      Tier       │    │      Tier         │    │      Registry       │
+├─────────────────┤    ├───────────────────┤    ├────────────────────┤
+│ Route 53        │    │ Aurora Serverless │    │ Amazon ECR         │
+│ SSL Certificate │    │ v2 PostgreSQL     │    │ (ECR Stack)        │
+│ Load Balancer   │    │ Secrets Manager   │    │                    │
+│ ECS Fargate     │    │                   │    │                    │
+└─────────────────┘    └───────────────────┘    └────────────────────┘
 ```
+
+> **Note:** There is no presentation tier (such as CloudFront or web frontend) in this architecture. All components are backend/API only.
 
 ### Design Principles
 
@@ -43,7 +47,7 @@ The NestJS Playground application is deployed on AWS using a modern, serverless-
 
 ## Infrastructure Components
 
-### Network Stack
+### Network Stack (`network.stack.ts`)
 
 **Purpose**: Provides foundational networking, DNS, and SSL capabilities.
 
@@ -65,7 +69,7 @@ CDK_CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/...
 CDK_DOMAIN_NAME=nestjs-playground-api
 ```
 
-### Database Stack
+### Database Stack (`database.stack.ts`)
 
 **Purpose**: Provides managed PostgreSQL database with automatic scaling.
 
@@ -94,35 +98,33 @@ DB_PASSWORD: auto-generated (from secrets)
 DB_DATABASE: nestjs_playground
 ```
 
-### Compute Stack
+### ECR Stack (`ecr.stack.ts`)
+
+**Purpose**: Manages the Amazon Elastic Container Registry (ECR) for storing and scanning application container images.
+
+**Key Resources**:
+
+- **ECR Repository**: `${appName}` (named per environment)
+- **Image Scanning**: Enabled on push for vulnerability detection
+- **Tag Mutability**: Mutable tags for development workflows
+- **Removal Policy**: Retain in production, destroy in non-prod environments
+- **Outputs**: Exports repository URI, name, and ARN for use in other stacks
+
+### Compute Stack (`compute.stack.ts`)
 
 **Purpose**: Hosts the NestJS application using containerized microservices.
 
 **Key Resources**:
 
-#### Container Registry (ECR)
-
-- Repository: `${appName}-${environment}`
-- Image scanning enabled for vulnerability detection
-- Lifecycle policy for image cleanup
-
-#### Container Orchestration (ECS)
-
-- **Cluster**: Managed ECS cluster with container insights
+- **ECS Cluster**: Managed ECS cluster with container insights
 - **Task Definition**: Fargate task with 256 CPU, 512 MB memory
 - **Service**: Maintains desired instance count with rolling deployments
 - **Auto Scaling**: CPU-based scaling (70% threshold, 1-4 instances)
-
-#### Load Balancing (ALB)
-
 - **Application Load Balancer**: Internet-facing with HTTPS termination
 - **Target Group**: Health checks on `/health` endpoint
 - **Listeners**:
   - Port 443 (HTTPS): Routes to application
   - Port 80 (HTTP): Redirects to HTTPS
-
-#### Networking
-
 - **Security Groups**: Restrictive ingress/egress rules
 - **Subnets**: Application deployed in private subnets with NAT Gateway access
 
@@ -175,13 +177,26 @@ DB_DATABASE: nestjs_playground
    - Check AWS Console for created resources
    - Test application URL: `https://nestjs-playground-api.example.com`
 
-### Deployment Order
+### Deployment Order & Stack Dependencies
 
 The CDK automatically handles dependencies, but the logical order is:
 
 1. **Network Stack**: Sets up VPC references and DNS
 2. **Database Stack**: Creates Aurora cluster in VPC
-3. **Compute Stack**: Deploys application with database connectivity
+3. **ECR Stack**: Creates ECR repository for container images
+4. **Compute Stack**: Deploys application with database connectivity and references ECR for images
+
+**Stack Dependency Diagram:**
+
+```
+Network Stack
+   ↓
+Database Stack
+   ↓
+ECR Stack
+   ↓
+Compute Stack
+```
 
 ## Environment Management
 
@@ -390,7 +405,7 @@ aws logs filter-log-events \
 
 ### Code Organization
 
-1. **Stack Separation**: Maintain logical separation between network, database, and compute
+1. **Stack Separation**: Maintain logical separation between network, database, ECR, and compute
 2. **Configuration Management**: Use environment variables for all environment-specific values
 3. **Version Control**: Tag infrastructure releases for rollback capability
 4. **Code Reviews**: Review all infrastructure changes before deployment
