@@ -15,6 +15,17 @@ const environment = process.env.CDK_ENVIRONMENT || 'dev';
 const account = process.env.CDK_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT;
 const region = process.env.CDK_REGION || process.env.CDK_DEFAULT_REGION;
 
+// Compute configuration
+const taskMemoryMb = parseInt(process.env.CDK_TASK_MEMORY_MB || '512', 10);
+const taskCpuUnits = parseInt(process.env.CDK_TASK_CPU_UNITS || '256', 10);
+const serviceDesiredCount = parseInt(process.env.CDK_SERVICE_DESIRED_COUNT || '0', 10);
+const serviceMinCapacity = parseInt(process.env.CDK_SERVICE_MIN_CAPACITY || '0', 10);
+const serviceMaxCapacity = parseInt(process.env.CDK_SERVICE_MAX_CAPACITY || '4', 10);
+
+// Database configuration
+const databaseMinCapacity = parseFloat(process.env.CDK_DATABASE_MIN_CAPACITY || '0.5');
+const databaseMaxCapacity = parseFloat(process.env.CDK_DATABASE_MAX_CAPACITY || '1');
+
 // Validate required environment variables
 const requiredEnvVars = ['CDK_HOSTED_ZONE_ID', 'CDK_HOSTED_ZONE_NAME', 'CDK_CERTIFICATE_ARN', 'CDK_DOMAIN_NAME'];
 
@@ -68,6 +79,8 @@ const databaseStack = new DatabaseStack(app, `${appName}-database-${environment}
   vpc: networkStack.vpc,
   databaseName: process.env.CDK_DATABASE_NAME || 'nestjs_playground',
   databaseUsername: process.env.CDK_DATABASE_USERNAME || 'postgres',
+  databaseMinCapacity,
+  databaseMaxCapacity,
   appName,
   environment,
 });
@@ -85,6 +98,11 @@ const computeStack = new ComputeStack(app, `${appName}-compute-${environment}`, 
   appName,
   appPort,
   loggingLevel,
+  taskMemoryMb,
+  taskCpuUnits,
+  serviceDesiredCount,
+  serviceMinCapacity,
+  serviceMaxCapacity,
   environment,
 });
 

@@ -8,6 +8,8 @@ export interface DatabaseStackProps extends cdk.StackProps {
   vpc: ec2.IVpc;
   databaseName: string;
   databaseUsername: string;
+  databaseMinCapacity: number;
+  databaseMaxCapacity: number;
   appName: string;
   environment: string;
 }
@@ -56,8 +58,8 @@ export class DatabaseStack extends cdk.Stack {
       readers: [
         // Cost optimization: no readers initially, can be added later if needed
       ],
-      serverlessV2MinCapacity: 0.5, // Minimum ACUs for cost optimization
-      serverlessV2MaxCapacity: 1, // Maximum ACUs for cost optimization
+      serverlessV2MinCapacity: props.databaseMinCapacity, // Configurable minimum ACUs
+      serverlessV2MaxCapacity: props.databaseMaxCapacity, // Configurable maximum ACUs
       vpc: props.vpc,
       securityGroups: [databaseSecurityGroup],
       subnetGroup,

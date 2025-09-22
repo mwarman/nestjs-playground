@@ -20,6 +20,11 @@ export interface ComputeStackProps extends cdk.StackProps {
   appName: string;
   appPort: number;
   loggingLevel: string;
+  taskMemoryMb: number;
+  taskCpuUnits: number;
+  serviceDesiredCount: number;
+  serviceMinCapacity: number;
+  serviceMaxCapacity: number;
   environment: string;
 }
 
@@ -40,8 +45,8 @@ export class ComputeStack extends cdk.Stack {
 
     // Create task definition
     const taskDefinition = new ecs.FargateTaskDefinition(this, 'ApplicationTaskDefinition', {
-      memoryLimitMiB: 512,
-      cpu: 256,
+      memoryLimitMiB: props.taskMemoryMb,
+      cpu: props.taskCpuUnits,
       family: `${props.appName}-${props.environment}`,
     });
 
@@ -157,7 +162,7 @@ export class ComputeStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
-      desiredCount: 0,
+      desiredCount: props.serviceDesiredCount,
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
       propagateTags: ecs.PropagatedTagSource.SERVICE,
@@ -168,8 +173,8 @@ export class ComputeStack extends cdk.Stack {
 
     // Configure auto scaling
     const scalableTarget = this.service.autoScaleTaskCount({
-      minCapacity: 0,
-      maxCapacity: 4,
+      minCapacity: props.serviceMinCapacity,
+      maxCapacity: props.serviceMaxCapacity,
     });
 
     // Scale based on CPU utilization

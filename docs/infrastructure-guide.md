@@ -62,7 +62,6 @@ The NestJS Playground backend application is deployed on AWS using a modern, ser
 
 ```typescript
 // Required environment variables
-CDK_VPC_ID=vpc-xxxxxxxxxxxxxxxxx
 CDK_HOSTED_ZONE_ID=Z1234567890ABC
 CDK_HOSTED_ZONE_NAME=example.com
 CDK_CERTIFICATE_ARN=arn:aws:acm:us-east-1:123456789012:certificate/...
@@ -75,17 +74,27 @@ CDK_DOMAIN_NAME=nestjs-playground-api
 
 **Key Resources**:
 
-- **Aurora Serverless v2**: PostgreSQL 15.4 with 0.5-1 ACU capacity
+- **Aurora Serverless v2**: PostgreSQL 17.5 with configurable ACU capacity
 - **Security Group**: Restricts access to port 5432 from application only
 - **Subnet Group**: Database deployed in private subnets
 - **Secrets Manager**: Automatic credential generation and rotation
 
+**Configuration**:
+
+```typescript
+// Database environment variables
+CDK_DATABASE_NAME = nestjs_playground;
+CDK_DATABASE_USERNAME = postgres;
+CDK_DATABASE_MIN_CAPACITY = 0.5; // Minimum ACUs (configurable)
+CDK_DATABASE_MAX_CAPACITY = 1; // Maximum ACUs (configurable)
+```
+
 **Cost Optimization Features**:
 
-- Minimum capacity: 0.5 ACUs ($0.06/hour when active)
-- Maximum capacity: 1 ACU ($0.12/hour when active)
+- Configurable minimum capacity: 0.5-16 ACUs (default: 0.5)
+- Configurable maximum capacity: 1-16 ACUs (default: 1)
 - Automatic pausing when inactive (scale-to-zero capability)
-- 7-day backup retention (minimum)
+- Backup retention: 7 days (production) / 1 day (non-production)
 
 **Connection Details**:
 
@@ -117,9 +126,9 @@ DB_DATABASE: nestjs_playground
 **Key Resources**:
 
 - **ECS Cluster**: Managed ECS cluster with container insights
-- **Task Definition**: Fargate task with 256 CPU, 512 MB memory
+- **Task Definition**: Fargate task with configurable CPU and memory
 - **Service**: Maintains desired instance count with rolling deployments
-- **Auto Scaling**: CPU-based scaling (70% threshold, 1-4 instances)
+- **Auto Scaling**: CPU-based scaling (70% threshold, configurable min/max instances)
 - **Application Load Balancer**: Internet-facing with HTTPS termination
 - **Target Group**: Health checks on `/health` endpoint
 - **Listeners**:
@@ -127,6 +136,19 @@ DB_DATABASE: nestjs_playground
   - Port 80 (HTTP): Redirects to HTTPS
 - **Security Groups**: Restrictive ingress/egress rules
 - **Subnets**: Application deployed in private subnets with NAT Gateway access
+
+**Configuration**:
+
+```typescript
+// Compute environment variables
+CDK_APP_PORT = 3000;
+CDK_APP_LOGGING_LEVEL = debug;
+CDK_TASK_MEMORY_MB = 512; // Task memory in MB (configurable)
+CDK_TASK_CPU_UNITS = 256; // Task CPU units (configurable)
+CDK_SERVICE_DESIRED_COUNT = 0; // Initial desired count (configurable)
+CDK_SERVICE_MIN_CAPACITY = 0; // Auto scaling minimum (configurable)
+CDK_SERVICE_MAX_CAPACITY = 4; // Auto scaling maximum (configurable)
+```
 
 ## Deployment Process
 
@@ -198,20 +220,122 @@ ECR Stack
 Compute Stack
 ```
 
+## Resource Configuration
+
+### Sizing Recommendations
+
+The infrastructure supports configurable resource allocation to match workload requirements and optimize costs:
+
+#### Development Environment
+
+```bash
+# Database - Minimal cost configuration
+CDK_DATABASE_MIN_CAPACITY=0.5
+CDK_DATABASE_MAX_CAPACITY=1
+
+# Compute - Minimal resource configuration
+CDK_TASK_MEMORY_MB=512
+CDK_TASK_CPU_UNITS=256
+CDK_SERVICE_DESIRED_COUNT=0      # Start with 0 to save costs
+CDK_SERVICE_MIN_CAPACITY=0
+CDK_SERVICE_MAX_CAPACITY=2
+```
+
+#### Staging/QA Environment
+
+```bash
+# Database - Light production load
+CDK_DATABASE_MIN_CAPACITY=0.5
+CDK_DATABASE_MAX_CAPACITY=2
+
+# Compute - Higher availability
+CDK_TASK_MEMORY_MB=1024
+CDK_TASK_CPU_UNITS=512
+CDK_SERVICE_DESIRED_COUNT=1
+CDK_SERVICE_MIN_CAPACITY=1
+CDK_SERVICE_MAX_CAPACITY=4
+```
+
+#### Production Environment
+
+```bash
+# Database - Production capacity
+CDK_DATABASE_MIN_CAPACITY=1
+CDK_DATABASE_MAX_CAPACITY=8
+
+# Compute - High availability and performance
+CDK_TASK_MEMORY_MB=2048
+CDK_TASK_CPU_UNITS=1024
+CDK_SERVICE_DESIRED_COUNT=2
+CDK_SERVICE_MIN_CAPACITY=2
+CDK_SERVICE_MAX_CAPACITY=10
+```
+
+### Performance Considerations
+
+- **CPU/Memory Ratio**: Maintain 1:2 ratio (e.g., 512 CPU with 1024 MB memory)
+- **Database ACUs**: 1 ACU = 2 GB RAM + proportional CPU and networking
+- **Auto Scaling**: Set appropriate min/max to handle traffic spikes while controlling costs
+- **Health Checks**: Ensure adequate memory for application startup and health check responsiveness
+
 ## Environment Management
 
 ### Environment Variables
 
 All configuration uses environment variables prefixed with `CDK_`:
 
-| Variable              | Purpose             | Example                 |
-| --------------------- | ------------------- | ----------------------- |
-| `CDK_ACCOUNT`         | AWS Account ID      | `123456789012`          |
-| `CDK_REGION`          | AWS Region          | `us-east-1`             |
-| `CDK_ENVIRONMENT`     | Environment name    | `dev`, `qa`, `prd`      |
-| `CDK_VPC_ID`          | Existing VPC ID     | `vpc-0123456789abcdef0` |
-| `CDK_HOSTED_ZONE_ID`  | Route 53 zone ID    | `Z1234567890ABC`        |
-| `CDK_CERTIFICATE_ARN` | SSL certificate ARN | `arn:aws:acm:...`       |
+#### Core Infrastructure Variables
+
+| Variable          | Purpose          | Example            | Required |
+| ----------------- | ---------------- | ------------------ | -------- |
+| `CDK_ACCOUNT`     | AWS Account ID   | `123456789012`     | Optional |
+| `CDK_REGION`      | AWS Region       | `us-east-1`        | Optional |
+| `CDK_ENVIRONMENT` | Environment name | `dev`, `qa`, `prd` | Yes      |
+
+#### Network & Security Variables
+
+| Variable               | Purpose               | Example                        | Required |
+| ---------------------- | --------------------- | ------------------------------ | -------- |
+| `CDK_HOSTED_ZONE_ID`   | Route 53 zone ID      | `Z1234567890ABC`               | Yes      |
+| `CDK_HOSTED_ZONE_NAME` | Route 53 zone name    | `example.com`                  | Yes      |
+| `CDK_DOMAIN_NAME`      | Application subdomain | `nestjs-playground-api`        | Yes      |
+| `CDK_CERTIFICATE_ARN`  | SSL certificate ARN   | `arn:aws:acm:us-east-1:123...` | Yes      |
+
+#### Application Variables
+
+| Variable                | Purpose          | Default             | Example  |
+| ----------------------- | ---------------- | ------------------- | -------- |
+| `CDK_APP_NAME`          | Application name | `nestjs-playground` | `my-app` |
+| `CDK_APP_PORT`          | Application port | `3000`              | `3000`   |
+| `CDK_APP_LOGGING_LEVEL` | Log level        | `info`              | `debug`  |
+
+#### Database Variables
+
+| Variable                    | Purpose           | Default             | Range  | Example    |
+| --------------------------- | ----------------- | ------------------- | ------ | ---------- |
+| `CDK_DATABASE_NAME`         | Database name     | `nestjs_playground` | -      | `myapp_db` |
+| `CDK_DATABASE_USERNAME`     | Database username | `postgres`          | -      | `admin`    |
+| `CDK_DATABASE_MIN_CAPACITY` | Min Aurora ACUs   | `0.5`               | 0.5-16 | `1.0`      |
+| `CDK_DATABASE_MAX_CAPACITY` | Max Aurora ACUs   | `1`                 | 1-16   | `4.0`      |
+
+#### Compute Variables
+
+| Variable                    | Purpose               | Default | Range     | Example |
+| --------------------------- | --------------------- | ------- | --------- | ------- |
+| `CDK_TASK_MEMORY_MB`        | Task memory (MB)      | `512`   | 512-30720 | `1024`  |
+| `CDK_TASK_CPU_UNITS`        | Task CPU units        | `256`   | 256-4096  | `512`   |
+| `CDK_SERVICE_DESIRED_COUNT` | Initial service count | `0`     | 0-100     | `2`     |
+| `CDK_SERVICE_MIN_CAPACITY`  | Auto scaling minimum  | `0`     | 0-100     | `1`     |
+| `CDK_SERVICE_MAX_CAPACITY`  | Auto scaling maximum  | `4`     | 1-100     | `10`    |
+
+#### Tagging Variables
+
+| Variable        | Purpose             | Default            | Example             |
+| --------------- | ------------------- | ------------------ | ------------------- |
+| `CDK_TAG_APP`   | Application tag     | `${APP_NAME}`      | `nestjs-playground` |
+| `CDK_TAG_ENV`   | Environment tag     | `${ENVIRONMENT}`   | `production`        |
+| `CDK_TAG_OU`    | Organizational unit | `engineering`      | `backend-team`      |
+| `CDK_TAG_OWNER` | Resource owner      | `team@example.com` | `john@company.com`  |
 
 ### Multi-Environment Strategy
 
@@ -260,16 +384,19 @@ CDK_ENVIRONMENT=prd npm run deploy
 ### Database Costs
 
 - **Aurora Serverless v2**: Pay-per-use with scale-to-zero capability
-- **Minimum Configuration**: 0.5 ACU starting capacity
-- **Short Backup Retention**: 7 days (minimum)
-- **No Read Replicas**: Single writer instance for development
+- **Configurable Capacity**: Adjust `CDK_DATABASE_MIN_CAPACITY` and `CDK_DATABASE_MAX_CAPACITY` based on workload
+- **Default Configuration**: 0.5-1 ACU for development (~$0.06-$0.12/hour when active)
+- **Short Backup Retention**: 1 day (non-prod) / 7 days (production)
+- **No Read Replicas**: Single writer instance for cost optimization
 
 ### Compute Costs
 
 - **Fargate Pricing**: Pay only for running containers
-- **Right-Sizing**: 256 CPU / 512 MB memory for development workloads
-- **Auto Scaling**: Scale down to 1 instance during low usage
-- **Log Retention**: 1-week retention for cost optimization
+- **Configurable Resources**: Adjust `CDK_TASK_MEMORY_MB` and `CDK_TASK_CPU_UNITS` based on needs
+- **Default Configuration**: 256 CPU / 512 MB memory for development workloads
+- **Auto Scaling**: Configure `CDK_SERVICE_MIN_CAPACITY` and `CDK_SERVICE_MAX_CAPACITY` for optimal cost/performance
+- **Desired Count**: Start with `CDK_SERVICE_DESIRED_COUNT=0` for development to minimize costs
+- **Log Retention**: 1-week retention (non-prod) / 1-month retention (production)
 
 ### Network Costs
 
@@ -381,6 +508,14 @@ aws logs filter-log-events \
 ```
 
 ## Best Practices
+
+### Configuration Management
+
+1. **Environment-Specific Values**: Use different `.env` files for each environment
+2. **Resource Sizing**: Start small and scale up based on actual usage metrics
+3. **Cost Monitoring**: Regularly review and adjust capacity settings based on usage
+4. **Version Control**: Keep `.env.example` updated but never commit actual `.env` files
+5. **Validation**: Test configuration changes in development before applying to production
 
 ### Development Workflow
 
