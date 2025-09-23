@@ -28,6 +28,8 @@ The following environment variables are available for configuration:
 | DB_USER                    | PostgreSQL database username                                                                                                                                    | nestuser      |
 | DB_PASS                    | PostgreSQL database password                                                                                                                                    | nestpassword  |
 | DB_DATABASE                | PostgreSQL database name                                                                                                                                        | nestdb        |
+| DB_SSL                     | Enable SSL for PostgreSQL connection. Allowed: true, false, "true", "false", 1, 0. Useful for cloud DBs or production.                                          | true          |
+| DB_MIGRATIONS_RUN          | Automatically run migrations at startup.                                                                                                                        | true          |
 | SCHEDULE_TASK_CLEANUP_CRON | **Optional.** Cron expression for scheduled task cleanup. Format: second minute hour day month weekday. If not provided, the cleanup job will not be scheduled. | _Not set_     |
 
 ## Environment Variable Precedence in NestJS
@@ -117,6 +119,10 @@ DB_PORT=5432
 DB_USER=nestuser
 DB_PASS=nestpassword
 DB_DATABASE=nestdb
+# Enable SSL for PostgreSQL connection (true/false/1/0)
+DB_SSL=false
+# DB_MIGRATIONS_RUN: Automatically run migrations on startup (true/false) Default: true
+DB_MIGRATIONS_RUN=true
 
 # Scheduled Task Settings
 # Cron expression for task cleanup schedule (OPTIONAL)

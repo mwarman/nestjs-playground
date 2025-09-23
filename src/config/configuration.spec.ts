@@ -32,6 +32,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
@@ -55,6 +57,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
@@ -78,6 +82,8 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(typeof result.APP_PORT).toBe('number');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
@@ -219,10 +225,37 @@ describe('Configuration', () => {
         DB_USER: DEFAULT_DB_USER,
         DB_PASS: DEFAULT_DB_PASS,
         DB_DATABASE: DEFAULT_DB_DATABASE,
+        DB_MIGRATIONS_RUN: true,
+        DB_SSL: true,
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
+    });
+
+    it('should use default DB_SSL when undefined', () => {
+      // Arrange
+      const input = {};
+
+      // Act
+      const result = validate(input);
+
+      // Assert
+      expect(result.DB_SSL).toBe(true);
+    });
+
+    it('should coerce DB_SSL string to boolean', () => {
+      // Arrange
+      const inputTrue = { DB_SSL: 'true' };
+      const inputFalse = { DB_SSL: 'false' };
+
+      // Act
+      const resultTrue = validate(inputTrue);
+      const resultFalse = validate(inputFalse);
+
+      // Assert
+      expect(resultTrue.DB_SSL).toBe(true);
+      expect(resultFalse.DB_SSL).toBe(false);
     });
   });
 

@@ -28,6 +28,8 @@ The goal is to provide a clean, type-safe, and extensible foundation for backend
 - **Testing Framework:** Jest (unit tests)
 - **Linting & Formatting:** ESLint, Prettier
 - **Containerization:** Docker
+- **Infrastructure as Code:** AWS CDK
+- **CI/CD:** GitHub Actions
 
 ---
 
@@ -35,6 +37,8 @@ The goal is to provide a clean, type-safe, and extensible foundation for backend
 
 ```
 project-root/
+├── docs/                          # Project documentation
+│
 ├── src/
 │   ├── app.module.ts              # Root application module
 │   ├── main.ts                    # Application entry point
@@ -63,11 +67,24 @@ project-root/
 │   └── config/                    # Configuration files
 │       └── app.config.ts
 │
+├── infrastructure/                # AWS CDK implementation (self-contained)
+│   ├── cdk.json
+│   ├── stacks/                    # CDK stacks
+│   │   ├── network.stack.ts
+│   │   ├── database.stack.ts
+│   │   └── compute.stack.ts
+│   ├── .env.example               # Example environment variables for CDK
+│   ├── app.ts                     # CDK app entry point
+│   ├── package.json
+│   ├── README.md
+│   └── tsconfig.json
+│
 ├── test/                          # Test files (unit & integration)
 │   └── users/
 │       └── users.service.spec.ts
 │
 ├── .eslintrc.js                   # ESLint configuration
+├── .nvmrc                         # Node.js version management
 ├── .prettierrc                    # Prettier configuration
 ├── jest.config.js                 # Jest configuration
 ├── nest-cli.json                  # Nest CLI configuration
@@ -141,3 +158,12 @@ describe('UsersService', () => {
   });
 });
 ```
+
+---
+
+## AWS CDK Guidelines
+
+- Define one CDK stack per major grouping of resources (e.g., Network stack, database stack, compute stack).
+- Use **.env** for environment variables prefixed with `CDK_`, but avoid committing this file
+- Tag all CDK resources appropriately (`App`, `Env`, `OU`, `Owner`).
+- Deploy separate environments (dev/qa/prd) using configuration values.
