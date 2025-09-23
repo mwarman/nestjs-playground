@@ -1,20 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { ConsoleLogger, LogLevel } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
-import { DEFAULT_LOGGING_LEVEL, Config } from './config/configuration';
+import { Config } from './config/configuration';
 
 async function bootstrap() {
-  // Determine log level from environment variable or use default
-  const logLevel: LogLevel = (process.env.LOGGING_LEVEL as LogLevel) || DEFAULT_LOGGING_LEVEL;
-
-  // Create the NestJS application with specified log level
+  // Create the NestJS application instance
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
-    logger: new ConsoleLogger({ logLevels: [logLevel], json: true }),
   });
+
+  // Use the Pino logger for structured logging
+  app.useLogger(app.get(Logger));
 
   // Set up Swagger for API documentation
   const documentBuilder = new DocumentBuilder()
