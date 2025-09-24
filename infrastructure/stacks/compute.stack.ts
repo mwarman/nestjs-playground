@@ -66,11 +66,14 @@ export class ComputeStack extends cdk.Stack {
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: 'ecs',
         logGroup,
+        mode: ecs.AwsLogDriverMode.NON_BLOCKING,
+        maxBufferSize: cdk.Size.mebibytes(25),
       }),
       environment: {
         NODE_ENV: 'production',
         APP_PORT: props.appPort.toString(),
         LOGGING_LEVEL: props.loggingLevel,
+        LOGGING_FORMAT: 'json', // Enable JSON logging in the application
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(props.databaseSecret, 'host'),
