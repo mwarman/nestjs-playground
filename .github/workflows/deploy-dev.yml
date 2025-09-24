@@ -1,0 +1,173 @@
+name: Deploy to DEV
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_bootstrap:
+        description: 'Force CDK bootstrap (check if needed)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Setup Node.js using .nvmrc
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      # Step 3: Configure AWS credentials for role and region
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN_DEV }}
+          role-session-name: deploy-nestjs-playground-dev
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Step 4: Install the app dependencies
+      - name: Install app dependencies
+        run: npm ci
+
+      # Step 5: Build the app
+      - name: Build application
+        run: npm run build
+
+      # Step 6: Run the app unit tests
+      - name: Run unit tests
+        run: npm run test
+
+      # Step 7: Install the infrastructure dependencies
+      - name: Install infrastructure dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+
+      # Step 8: Create the infrastructure .env file from CDK_ENV_DEV variable
+      - name: Create infrastructure .env file
+        working-directory: ./infrastructure
+        run: |
+          echo "${{ vars.CDK_ENV_DEV }}" > .env
+          echo "✅ Infrastructure .env file created"
+
+      # Step 9: Build the infrastructure
+      - name: Build infrastructure
+        working-directory: ./infrastructure
+        run: npm run build
+
+      # Step 10: Bootstrap the CDK (if needed)
+      - name: Bootstrap CDK
+        working-directory: ./infrastructure
+        run: |
+          if [ "${{ inputs.force_bootstrap }}" = "true" ]; then
+            echo "🔄 Force bootstrapping CDK..."
+            npm run bootstrap
+          else
+            echo "⚡ Checking if CDK bootstrap is needed..."
+            # Try to describe the bootstrap stack to see if it exists
+            if ! aws cloudformation describe-stacks --stack-name CDKToolkit --region ${{ vars.AWS_REGION }} >/dev/null 2>&1; then
+              echo "🚀 CDK not bootstrapped, bootstrapping now..."
+              npm run bootstrap
+            else
+              echo "✅ CDK already bootstrapped, skipping..."
+            fi
+          fi
+
+      # Step 11: Synthesize the CDK stacks
+      - name: Synthesize CDK stacks
+        working-directory: ./infrastructure
+        run: npm run synth
+
+      # Step 12: Deploy the ECR CDK stack
+      - name: Deploy ECR stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying ECR stack..."
+          npx cdk deploy nestjs-playground-ecr-dev --require-approval never
+          echo "✅ ECR stack deployed successfully"
+
+      # Step 13: Build the app Docker image and publish it to ECR
+      - name: Build and push Docker image to ECR
+        run: |
+          # Get ECR repository URI
+          ECR_REPOSITORY_URI=$(aws ecr describe-repositories --repository-names nestjs-playground-dev --region ${{ vars.AWS_REGION }} --query 'repositories[0].repositoryUri' --output text)
+          echo "ECR Repository URI: $ECR_REPOSITORY_URI"
+
+          # Login to ECR
+          aws ecr get-login-password --region ${{ vars.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
+
+          # Build and tag the image
+          IMAGE_TAG=latest
+          echo "🔨 Building Docker image..."
+          docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
+
+          # Push the image
+          echo "📤 Pushing Docker image to ECR..."
+          docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
+          echo "✅ Docker image pushed successfully: $ECR_REPOSITORY_URI:$IMAGE_TAG"
+
+      # Step 14: Deploy the Network, Database, and Application CDK stacks
+      - name: Deploy Network stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Network stack..."
+          npx cdk deploy nestjs-playground-network-dev --require-approval never
+          echo "✅ Network stack deployed successfully"
+
+      - name: Deploy Database stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Database stack..."
+          npx cdk deploy nestjs-playground-database-dev --require-approval never
+          echo "✅ Database stack deployed successfully"
+
+      - name: Deploy Compute stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Compute stack..."
+          npx cdk deploy nestjs-playground-compute-dev --require-approval never
+          echo "✅ Compute stack deployed successfully"
+
+      # Step 15: Trigger a deployment of the latest Docker image in AWS ECS
+      - name: Update ECS service with latest image
+        run: |
+          # Get ECS cluster and service names
+          CLUSTER_NAME="nestjs-playground-dev"
+          SERVICE_NAME="nestjs-playground-dev"
+
+          echo "🔄 Forcing ECS service update to deploy latest image..."
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION }}
+
+          echo "✅ ECS service update triggered successfully"
+          echo "⏳ ECS will now pull and deploy the latest Docker image"
+
+      # Step 16: Clean up sensitive infrastructure files
+      - name: Clean up sensitive files
+        if: always()
+        working-directory: ./infrastructure
+        run: |
+          echo "🧹 Cleaning up sensitive files..."
+          rm -f .env
+          rm -rf cdk.out
+          echo "✅ Sensitive files cleaned up"
