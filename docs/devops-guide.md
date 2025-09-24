@@ -14,7 +14,7 @@ DevOps in this project focuses on automation, reliability, and maintainability. 
 - **Location:** All workflow files are stored in the `.github/workflows/` directory (if present).
 - **Common Workflows:**
   - **CI (Continuous Integration):** Runs tests and checks code quality on every push or pull request.
-  - **CD (Continuous Deployment):** Deploys code to production or staging environments (if configured).
+  - **CD (Continuous Deployment):** Deploys application to development environment with full infrastructure provisioning.
   - **Code Quality:** Performs automated code quality checks, formatting, security audits, and package analysis on a schedule, on push, or manually.
 
 ## GitHub Actions Workflows
@@ -58,6 +58,45 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
   6. Build application (`npm run build`)
   7. Run tests with coverage (`npm run test:cov`)
 - **Importance:** Ensures that all code merged into `main` passes linting, formatting, builds successfully, and is covered by tests. This prevents broken or low-quality code from being merged and keeps the main branch stable.
+
+### Deploy to DEV Workflow (`deploy-dev.yml`)
+
+- **Purpose:** Automatically deploys the application to the development environment on AWS, including infrastructure provisioning, application building, and container deployment.
+- **Triggers:**
+  - Manual: Via GitHub Actions UI with optional force bootstrap parameter
+- **Prerequisites:**
+  - GitHub Actions variables must be configured:
+    - `AWS_ROLE_ARN_DEV` - AWS IAM Role ARN for development environment
+    - `AWS_REGION` - AWS Region for deployment
+    - `CDK_ENV_DEV` - Complete `.env` file content for CDK infrastructure
+- **Main Steps:**
+  1. **Application Build & Test:**
+     - Checkout repository
+     - Setup Node.js (from `.nvmrc`)
+     - Install app dependencies
+     - Build application
+     - Run unit tests
+  2. **Infrastructure Setup:**
+     - Install infrastructure dependencies
+     - Create infrastructure `.env` file from GitHub variables
+     - Build infrastructure TypeScript code
+     - Bootstrap CDK (smart check for existing bootstrap)
+     - Synthesize CDK CloudFormation templates
+  3. **Deployment Process:**
+     - Deploy ECR stack (container registry)
+     - Build and push Docker image to ECR
+     - Deploy Network stack (VPC, subnets, security groups)
+     - Deploy Database stack (RDS Aurora Serverless)
+     - Deploy Compute stack (ECS Fargate service)
+     - Force ECS service update to deploy latest image
+  4. **Cleanup:**
+     - Remove sensitive files (`.env`, `cdk.out`)
+- **Security Features:**
+  - Uses OIDC for AWS authentication (no long-lived credentials)
+  - Automatic cleanup of sensitive files
+  - Proper IAM role assumption with session naming
+- **Timeout:** 30 minutes to prevent runaway deployments
+- **Importance:** Enables rapid deployment of latest changes to development environment for testing and validation. Follows infrastructure-as-code principles with proper dependency management and security practices.
 
 ---
 
