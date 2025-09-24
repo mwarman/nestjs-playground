@@ -72,25 +72,9 @@ npm run start
    └── devops-guide.md              # DevOps guide
 ```
 
-## Configuration Guide
+## Documentation Hub
 
-Application configuration is managed via environment variables. For a full list of available variables, their descriptions, and default values, see the [Configuration Guide](docs/configuration-guide.md).
-
-## Docker Guide
-
-The application can be containerized using Docker for consistent deployment across environments. For comprehensive instructions on building, running, and managing Docker containers, including environment variable configuration and troubleshooting, see the [Docker Guide](docs/docker-guide.md).
-
-## Docker Compose Guide
-
-For local development, we use Docker Compose to orchestrate the PostgreSQL database and pgAdmin services. See the [Docker Compose Guide](docs/docker-compose-guide.md) for setup instructions, usage, and troubleshooting tips.
-
-## DevOps Guide
-
-For information on CI/CD, deployment, and operational best practices, see the [DevOps Guide](docs/devops-guide.md).
-
-## API Documentation Guide
-
-For details on how to view and use the automatically generated Swagger and OpenAPI documentation, see the [API Documentation Guide](docs/api-documentation-guide.md).
+For all guides and references—including configuration, Docker, DevOps, and API documentation—see the [Documentation Table of Contents](docs/README.md).
 
 ## Additional Information
 
