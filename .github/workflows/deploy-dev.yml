@@ -107,7 +107,7 @@ jobs:
       - name: Build and push Docker image to ECR
         run: |
           # Get ECR repository URI
-          ECR_REPOSITORY_URI=$(aws ecr describe-repositories --repository-names nestjs-playground-dev --region ${{ vars.AWS_REGION }} --query 'repositories[0].repositoryUri' --output text)
+          ECR_REPOSITORY_URI=$(aws ecr describe-repositories --repository-names nestjs-playground --region ${{ vars.AWS_REGION }} --query 'repositories[0].repositoryUri' --output text)
           echo "ECR Repository URI: $ECR_REPOSITORY_URI"
 
           # Login to ECR
