@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 import { Config } from './config/configuration';
@@ -11,6 +12,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
+
+  // Apply security middleware
+  app.use(helmet());
 
   // Use the Pino logger for structured logging
   app.useLogger(app.get(Logger));
