@@ -57,7 +57,12 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
   5. Check code formatting (`npm run format:check`)
   6. Build application (`npm run build`)
   7. Run tests with coverage (`npm run test:cov`)
-- **Importance:** Ensures that all code merged into `main` passes linting, formatting, builds successfully, and is covered by tests. This prevents broken or low-quality code from being merged and keeps the main branch stable.
+  8. Install infrastructure dependencies (`npm ci` in `infrastructure/`)
+  9. Build infrastructure TypeScript code (`npm run build` in `infrastructure/`)
+  10. Create infrastructure `.env` file from GitHub variable (`CDK_ENV_DEV`)
+  11. Configure AWS credentials for synth (OIDC, role assumption)
+  12. Synthesize CDK stacks (`npm run synth` in `infrastructure/`)
+- **Importance:** Ensures that all code merged into `main` passes linting, formatting, builds successfully, is covered by tests, and that the AWS CDK infrastructure code is valid and synthesizes successfully. This prevents broken or low-quality code and infrastructure from being merged and keeps the main branch stable.
 
 ### Deploy to DEV Workflow (`deploy-dev.yml`)
 
