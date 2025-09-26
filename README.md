@@ -1,12 +1,12 @@
 # NestJS Playground
 
-<div style="display:flex; gap: 16px;">
-
 [![Continuous Integration](https://github.com/mwarman/nestjs-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/mwarman/nestjs-playground/actions/workflows/ci.yml)
-
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
 [![Code Quality](https://github.com/mwarman/nestjs-playground/actions/workflows/code-quality.yml/badge.svg)](https://github.com/mwarman/nestjs-playground/actions/workflows/code-quality.yml)
-
-</div>
 
 ## Overview
 
