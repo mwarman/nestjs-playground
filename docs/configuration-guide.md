@@ -23,6 +23,7 @@ The following environment variables are available for configuration:
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | APP_PORT                   | The port on which the application will run.                                                                                                                     | 3001          |
 | LOGGING_LEVEL              | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal                                                                  | log           |
+| CORS_ALLOWED_ORIGIN        | CORS allowed origins. Use "\*" to allow all origins, or comma-separated list for specific origins (e.g., "https://app.com,http://localhost:3000")               | \*            |
 | DB_HOST                    | PostgreSQL database host                                                                                                                                        | localhost     |
 | DB_PORT                    | PostgreSQL database port                                                                                                                                        | 5432          |
 | DB_USER                    | PostgreSQL database username                                                                                                                                    | nestuser      |
@@ -111,6 +112,12 @@ APP_PORT=3001
 
 # Logging Settings
 LOGGING_LEVEL=log
+
+# CORS Settings
+# CORS_ALLOWED_ORIGIN: Allowed origins for Cross-Origin Resource Sharing
+# Use "*" to allow all origins (development only)
+# Use comma-separated list for specific origins: "https://app.com,http://localhost:3000"
+CORS_ALLOWED_ORIGIN=*
 
 # Database Settings
 # PostgreSQL database connection configuration

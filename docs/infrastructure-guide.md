@@ -303,11 +303,12 @@ All configuration uses environment variables prefixed with `CDK_`:
 
 #### Application Variables
 
-| Variable                | Purpose          | Default             | Example  |
-| ----------------------- | ---------------- | ------------------- | -------- |
-| `CDK_APP_NAME`          | Application name | `nestjs-playground` | `my-app` |
-| `CDK_APP_PORT`          | Application port | `3000`              | `3000`   |
-| `CDK_APP_LOGGING_LEVEL` | Log level        | `info`              | `debug`  |
+| Variable                      | Purpose              | Default             | Example                                 |
+| ----------------------------- | -------------------- | ------------------- | --------------------------------------- |
+| `CDK_APP_NAME`                | Application name     | `nestjs-playground` | `my-app`                                |
+| `CDK_APP_PORT`                | Application port     | `3000`              | `3000`                                  |
+| `CDK_APP_LOGGING_LEVEL`       | Log level            | `info`              | `debug`                                 |
+| `CDK_APP_CORS_ALLOWED_ORIGIN` | CORS allowed origins | `*`                 | `https://app.com,http://localhost:3000` |
 
 #### Database Variables
 

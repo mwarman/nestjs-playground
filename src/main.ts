@@ -13,8 +13,14 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
+  // Retrieve configuration service to access application settings
+  const configService = app.get(ConfigService<Config>);
+
   // Apply security middleware
-  app.use(helmet());
+  app.use(helmet()); // Must be before any other middleware
+  app.enableCors({
+    origin: configService.get<string | string[]>('CORS_ALLOWED_ORIGIN')!,
+  });
 
   // Use the Pino logger for structured logging
   app.useLogger(app.get(Logger));
@@ -31,9 +37,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, documentBuilder);
   SwaggerModule.setup('apidoc', app, document);
-
-  // Retrieve configuration service to access application settings
-  const configService = app.get(ConfigService<Config>);
 
   // Start the application and listen on the configured port
   await app.listen(configService.get<number>('APP_PORT')!);
