@@ -51,15 +51,19 @@ npm run start
 
 ```
 ├── src/                            # Main application source code
-│   ├── app.controller.ts           # App controller
-│   ├── app.controller.spec.ts      # App controller tests
 │   ├── app.module.ts               # App module
-│   ├── app.service.ts              # App service
 │   ├── main.ts                     # Application entry point
+│   ├── modules/
+│   │   └── tasks/                  # Example feature module
+│   │       ├── tasks.module.ts     # Tasks module definition
+│   │       ├── tasks.controller.ts # Tasks controller
+│   │       ├── tasks.service.ts    # Tasks service
+│   │       ├── dto/                # DTOs for tasks
+│   │       └── entities/           # Entities for tasks
 │   └── config/                     # Configuration-related code
 │       └── configuration.ts        # Configuration loader
 ├── test/                           # End-to-end tests
-│   ├── app.e2e-spec.ts             # E2E test spec
+│   ├── tasks.e2e-spec.ts           # E2E test spec
 │   └── jest-e2e.json               # Jest E2E config
 ├── .env.example                    # Example environment variables
 ├── package.json                    # Project metadata and scripts
