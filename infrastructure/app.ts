@@ -11,6 +11,7 @@ import { ComputeStack } from './stacks/compute.stack';
 const appName = process.env.CDK_APP_NAME || 'nestjs-playground';
 const appPort = parseInt(process.env.CDK_APP_PORT || '3000', 10);
 const loggingLevel = process.env.CDK_APP_LOGGING_LEVEL || 'info';
+const corsAllowedOrigin = process.env.CDK_APP_CORS_ALLOWED_ORIGIN || '*';
 const environment = process.env.CDK_ENVIRONMENT || 'dev';
 const account = process.env.CDK_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT;
 const region = process.env.CDK_REGION || process.env.CDK_DEFAULT_REGION;
@@ -98,6 +99,7 @@ const computeStack = new ComputeStack(app, `${appName}-compute-${environment}`, 
   appName,
   appPort,
   loggingLevel,
+  corsAllowedOrigin,
   taskMemoryMb,
   taskCpuUnits,
   serviceDesiredCount,

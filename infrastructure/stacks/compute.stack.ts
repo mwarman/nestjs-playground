@@ -20,6 +20,7 @@ export interface ComputeStackProps extends cdk.StackProps {
   appName: string;
   appPort: number;
   loggingLevel: string;
+  corsAllowedOrigin: string;
   taskMemoryMb: number;
   taskCpuUnits: number;
   serviceDesiredCount: number;
@@ -74,6 +75,7 @@ export class ComputeStack extends cdk.Stack {
         APP_PORT: props.appPort.toString(),
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: 'json', // Enable JSON logging in the application
+        CORS_ALLOWED_ORIGIN: props.corsAllowedOrigin,
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(props.databaseSecret, 'host'),
