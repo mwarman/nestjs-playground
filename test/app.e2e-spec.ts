@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 
@@ -12,6 +12,11 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+      prefix: 'v',
+    });
     await app.init();
   });
 
@@ -19,8 +24,8 @@ describe('AppController (e2e)', () => {
     await app?.close();
   });
 
-  it('/ (GET)', () => {
+  it('/v1 (GET)', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return request(app.getHttpServer()).get('/').expect(200).expect({ message: 'Hello World!' });
+    return request(app.getHttpServer()).get('/v1').expect(200).expect({ message: 'Hello World!' });
   });
 });

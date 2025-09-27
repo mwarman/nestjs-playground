@@ -29,7 +29,7 @@ import { GetTaskParamsDto } from './dto/get-task-params.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
-@Controller('tasks')
+@Controller({ path: 'tasks', version: '1' })
 @ApiTags('Tasks')
 @UseInterceptors(ClassSerializerInterceptor)
 export class TasksController {

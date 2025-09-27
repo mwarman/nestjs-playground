@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import { VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
@@ -11,6 +12,13 @@ async function bootstrap() {
   // Create the NestJS application instance
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
+  });
+
+  // Enable URI versioning
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+    prefix: 'v',
   });
 
   // Retrieve configuration service to access application settings

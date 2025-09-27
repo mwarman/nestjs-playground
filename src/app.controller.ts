@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 
 type Message = { message: string };
 
-@Controller()
+@Controller({ version: '1' })
 export class AppController {
   private readonly logger = new Logger(AppController.name);
 
