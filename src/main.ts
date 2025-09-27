@@ -15,7 +15,6 @@ async function bootstrap() {
 
   // Retrieve configuration service to access application settings
   const configService = app.get(ConfigService<Config>);
-  console.log('CORS_ALLOWED_ORIGIN:', configService.get<string | string[]>('CORS_ALLOWED_ORIGIN'));
 
   // Apply security middleware
   app.use(helmet());
