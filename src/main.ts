@@ -17,7 +17,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService<Config>);
 
   // Apply security middleware
-  app.use(helmet());
+  app.use(helmet()); // Must be before any other middleware
   app.enableCors({
     origin: configService.get<string | string[]>('CORS_ALLOWED_ORIGIN')!,
   });
