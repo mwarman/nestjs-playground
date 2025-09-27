@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const DEFAULT_APP_PORT = 3001;
 export const DEFAULT_LOGGING_LEVEL = 'log';
+export const DEFAULT_CORS_ALLOWED_ORIGIN = '*';
 export const DEFAULT_DB_HOST = 'localhost';
 export const DEFAULT_DB_PORT = 5432;
 export const DEFAULT_DB_USER = 'nestuser';
@@ -11,6 +12,17 @@ export const DEFAULT_DB_DATABASE = 'nestdb';
 const configSchema = z.object({
   APP_PORT: z.coerce.number().min(1).max(65535).default(DEFAULT_APP_PORT),
   LOGGING_LEVEL: z.enum(['verbose', 'debug', 'log', 'warn', 'error', 'fatal']).default(DEFAULT_LOGGING_LEVEL),
+  CORS_ALLOWED_ORIGIN: z
+    .string()
+    .default(DEFAULT_CORS_ALLOWED_ORIGIN)
+    .transform((val) => {
+      // Handle comma-separated values by splitting and trimming
+      if (val === '*') return '*';
+      return val
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+    }),
   DB_HOST: z.string().default(DEFAULT_DB_HOST),
   DB_PORT: z.coerce.number().min(1).max(65535).default(DEFAULT_DB_PORT),
   DB_USER: z.string().default(DEFAULT_DB_USER),

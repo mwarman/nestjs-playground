@@ -3,6 +3,7 @@ import {
   Config,
   DEFAULT_APP_PORT,
   DEFAULT_LOGGING_LEVEL,
+  DEFAULT_CORS_ALLOWED_ORIGIN,
   DEFAULT_DB_HOST,
   DEFAULT_DB_PORT,
   DEFAULT_DB_USER,
@@ -27,6 +28,7 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: DEFAULT_APP_PORT,
         LOGGING_LEVEL: DEFAULT_LOGGING_LEVEL,
+        CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -52,6 +54,7 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 8080,
         LOGGING_LEVEL: 'debug',
+        CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -77,6 +80,7 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 5000,
         LOGGING_LEVEL: 'warn',
+        CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -220,6 +224,7 @@ describe('Configuration', () => {
       expect(result).toEqual({
         APP_PORT: 3000,
         LOGGING_LEVEL: 'log',
+        CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -288,6 +293,79 @@ describe('Configuration', () => {
       expect(typeof result.APP_PORT).toBe('number');
       expect(typeof result.LOGGING_LEVEL).toBe('string');
       expect(['debug', 'log', 'warn', 'error']).toContain(result.LOGGING_LEVEL);
+    });
+
+    describe('CORS_ALLOWED_ORIGIN', () => {
+      it('should use default CORS_ALLOWED_ORIGIN when undefined', () => {
+        // Arrange
+        const input = {};
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.CORS_ALLOWED_ORIGIN).toBe(DEFAULT_CORS_ALLOWED_ORIGIN);
+      });
+
+      it('should return "*" when CORS_ALLOWED_ORIGIN is "*"', () => {
+        // Arrange
+        const input = {
+          CORS_ALLOWED_ORIGIN: '*',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.CORS_ALLOWED_ORIGIN).toBe('*');
+      });
+
+      it('should return single origin as array when CORS_ALLOWED_ORIGIN has one value', () => {
+        // Arrange
+        const input = {
+          CORS_ALLOWED_ORIGIN: 'https://example.com',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.CORS_ALLOWED_ORIGIN).toEqual(['https://example.com']);
+      });
+
+      it('should split and trim comma-separated origins', () => {
+        // Arrange
+        const input = {
+          CORS_ALLOWED_ORIGIN: 'https://example.com, http://localhost:3000, https://api.test.com',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.CORS_ALLOWED_ORIGIN).toEqual([
+          'https://example.com',
+          'http://localhost:3000',
+          'https://api.test.com',
+        ]);
+      });
+
+      it('should filter out empty strings after splitting', () => {
+        // Arrange
+        const input = {
+          CORS_ALLOWED_ORIGIN: 'https://example.com,,http://localhost:3000, ,https://api.test.com',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.CORS_ALLOWED_ORIGIN).toEqual([
+          'https://example.com',
+          'http://localhost:3000',
+          'https://api.test.com',
+        ]);
+      });
     });
   });
 });
