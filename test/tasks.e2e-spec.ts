@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
+import { HttpStatus, INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 
 import { AppModule } from '../src/app.module';
@@ -16,6 +16,11 @@ describe('TasksController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+      prefix: 'v',
+    });
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
     await app.init();
   });
@@ -24,7 +29,7 @@ describe('TasksController (e2e)', () => {
     await app?.close();
   });
 
-  describe('/tasks (POST)', () => {
+  describe('/v1/tasks (POST)', () => {
     it('should create a task with all fields', async () => {
       // Arrange
       const createTaskDto = {
@@ -35,7 +40,10 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      const response = await request(app.getHttpServer()).post('/tasks').send(createTaskDto).expect(HttpStatus.CREATED);
+      const response = await request(app.getHttpServer())
+        .post('/v1/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
 
       expect(response.body).toMatchObject({
         summary: createTaskDto.summary,
@@ -55,7 +63,10 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      const response = await request(app.getHttpServer()).post('/tasks').send(createTaskDto).expect(HttpStatus.CREATED);
+      const response = await request(app.getHttpServer())
+        .post('/v1/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
 
       expect(response.body).toMatchObject({
         summary: createTaskDto.summary,
@@ -77,7 +88,10 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      const response = await request(app.getHttpServer()).post('/tasks').send(createTaskDto).expect(HttpStatus.CREATED);
+      const response = await request(app.getHttpServer())
+        .post('/v1/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
 
       expect(response.body.isComplete).toBe(false);
     });
@@ -89,7 +103,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).post('/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).post('/v1/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when summary is empty string', async () => {
@@ -99,7 +113,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).post('/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).post('/v1/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when summary exceeds maximum length', async () => {
@@ -109,7 +123,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).post('/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).post('/v1/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when dueAt is invalid date format', async () => {
@@ -120,7 +134,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).post('/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).post('/v1/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when isComplete is not boolean', async () => {
@@ -131,7 +145,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).post('/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).post('/v1/tasks').send(invalidDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should accept valid ISO 8601 date string for dueAt', async () => {
@@ -142,13 +156,16 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      const response = await request(app.getHttpServer()).post('/tasks').send(createTaskDto).expect(HttpStatus.CREATED);
+      const response = await request(app.getHttpServer())
+        .post('/v1/tasks')
+        .send(createTaskDto)
+        .expect(HttpStatus.CREATED);
 
       expect(response.body.dueAt).toBe(createTaskDto.dueAt);
     });
   });
 
-  describe('/tasks (GET)', () => {
+  describe('/v1/tasks (GET)', () => {
     it('should retrieve all tasks including newly created ones', async () => {
       // Arrange - Create a task first
       const createTaskDto = {
@@ -157,12 +174,12 @@ describe('TasksController (e2e)', () => {
       };
 
       const createResponse = await request(app.getHttpServer())
-        .post('/tasks')
+        .post('/v1/tasks')
         .send(createTaskDto)
         .expect(HttpStatus.CREATED);
 
       // Act - Retrieve all tasks
-      const getResponse = await request(app.getHttpServer()).get('/tasks').expect(HttpStatus.OK);
+      const getResponse = await request(app.getHttpServer()).get('/v1/tasks').expect(HttpStatus.OK);
 
       // Assert
       expect(Array.isArray(getResponse.body)).toBe(true);
@@ -170,7 +187,7 @@ describe('TasksController (e2e)', () => {
     });
   });
 
-  describe('/tasks/:taskId (GET)', () => {
+  describe('/v1/tasks/:taskId (GET)', () => {
     it('should retrieve a specific task by ID', async () => {
       // Arrange - Create a task first
       const createTaskDto = {
@@ -179,14 +196,14 @@ describe('TasksController (e2e)', () => {
       };
 
       const createResponse = await request(app.getHttpServer())
-        .post('/tasks')
+        .post('/v1/tasks')
         .send(createTaskDto)
         .expect(HttpStatus.CREATED);
 
       const taskId = createResponse.body.id;
 
       // Act - Retrieve the specific task
-      const getResponse = await request(app.getHttpServer()).get(`/tasks/${taskId}`).expect(HttpStatus.OK);
+      const getResponse = await request(app.getHttpServer()).get(`/v1/tasks/${taskId}`).expect(HttpStatus.OK);
 
       // Assert
       expect(getResponse.body).toMatchObject({
@@ -201,7 +218,7 @@ describe('TasksController (e2e)', () => {
       const nonExistentId = '550e8400-e29b-41d4-a716-446655440000';
 
       // Act & Assert
-      await request(app.getHttpServer()).get(`/tasks/${nonExistentId}`).expect(HttpStatus.NOT_FOUND);
+      await request(app.getHttpServer()).get(`/v1/tasks/${nonExistentId}`).expect(HttpStatus.NOT_FOUND);
     });
 
     it('should return 400 for invalid UUID format', async () => {
@@ -209,11 +226,11 @@ describe('TasksController (e2e)', () => {
       const invalidId = 'not-a-uuid';
 
       // Act & Assert
-      await request(app.getHttpServer()).get(`/tasks/${invalidId}`).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).get(`/v1/tasks/${invalidId}`).expect(HttpStatus.BAD_REQUEST);
     });
   });
 
-  describe('/tasks/:taskId (PUT)', () => {
+  describe('/v1/tasks/:taskId (PUT)', () => {
     it('should update a task with all fields', async () => {
       // Arrange - First create a task
       const createTaskDto = {
@@ -224,7 +241,7 @@ describe('TasksController (e2e)', () => {
       };
 
       const createResponse = await request(app.getHttpServer())
-        .post('/tasks')
+        .post('/v1/tasks')
         .send(createTaskDto)
         .expect(HttpStatus.CREATED);
 
@@ -240,7 +257,7 @@ describe('TasksController (e2e)', () => {
 
       // Act & Assert
       const response = await request(app.getHttpServer())
-        .put(`/tasks/${taskId}`)
+        .put(`/v1/tasks/${taskId}`)
         .send(updateTaskDto)
         .expect(HttpStatus.OK);
 
@@ -264,7 +281,7 @@ describe('TasksController (e2e)', () => {
       };
 
       const createResponse = await request(app.getHttpServer())
-        .post('/tasks')
+        .post('/v1/tasks')
         .send(createTaskDto)
         .expect(HttpStatus.CREATED);
 
@@ -277,7 +294,7 @@ describe('TasksController (e2e)', () => {
 
       // Act & Assert
       const response = await request(app.getHttpServer())
-        .put(`/tasks/${taskId}`)
+        .put(`/v1/tasks/${taskId}`)
         .send(updateTaskDto)
         .expect(HttpStatus.OK);
 
@@ -303,7 +320,7 @@ describe('TasksController (e2e)', () => {
 
       // Act & Assert
       await request(app.getHttpServer())
-        .put(`/tasks/${nonExistentId}`)
+        .put(`/v1/tasks/${nonExistentId}`)
         .send(updateTaskDto)
         .expect(HttpStatus.NOT_FOUND);
     });
@@ -317,7 +334,10 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${invalidId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer())
+        .put(`/v1/tasks/${invalidId}`)
+        .send(updateTaskDto)
+        .expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 for missing required id field in body', async () => {
@@ -328,7 +348,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).put(`/v1/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 for invalid id format in body', async () => {
@@ -340,7 +360,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).put(`/v1/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 for empty summary when provided', async () => {
@@ -352,7 +372,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).put(`/v1/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 for invalid dueAt format', async () => {
@@ -365,7 +385,7 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).put(`/v1/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 for invalid isComplete type', async () => {
@@ -378,11 +398,11 @@ describe('TasksController (e2e)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer()).put(`/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).put(`/v1/tasks/${taskId}`).send(updateTaskDto).expect(HttpStatus.BAD_REQUEST);
     });
   });
 
-  describe('/tasks/:taskId (DELETE)', () => {
+  describe('/v1/tasks/:taskId (DELETE)', () => {
     it('should remove a task successfully', async () => {
       // Arrange - First create a task to delete
       const createTaskDto = {
@@ -393,17 +413,17 @@ describe('TasksController (e2e)', () => {
       };
 
       const createResponse = await request(app.getHttpServer())
-        .post('/tasks')
+        .post('/v1/tasks')
         .send(createTaskDto)
         .expect(HttpStatus.CREATED);
 
       const createdTaskId = createResponse.body.id;
 
       // Act & Assert - Delete the task
-      await request(app.getHttpServer()).delete(`/tasks/${createdTaskId}`).expect(HttpStatus.NO_CONTENT);
+      await request(app.getHttpServer()).delete(`/v1/tasks/${createdTaskId}`).expect(HttpStatus.NO_CONTENT);
 
       // Verify the task was actually deleted
-      await request(app.getHttpServer()).get(`/tasks/${createdTaskId}`).expect(HttpStatus.NOT_FOUND);
+      await request(app.getHttpServer()).get(`/v1/tasks/${createdTaskId}`).expect(HttpStatus.NOT_FOUND);
     });
 
     it('should return 404 when trying to delete a non-existent task', async () => {
@@ -411,7 +431,7 @@ describe('TasksController (e2e)', () => {
       const nonExistentTaskId = '550e8400-e29b-41d4-a716-446655440999';
 
       // Act & Assert
-      await request(app.getHttpServer()).delete(`/tasks/${nonExistentTaskId}`).expect(HttpStatus.NOT_FOUND);
+      await request(app.getHttpServer()).delete(`/v1/tasks/${nonExistentTaskId}`).expect(HttpStatus.NOT_FOUND);
     });
 
     it('should return 400 when taskId is invalid', async () => {
@@ -419,12 +439,12 @@ describe('TasksController (e2e)', () => {
       const invalidTaskId = 'invalid-uuid';
 
       // Act & Assert
-      await request(app.getHttpServer()).delete(`/tasks/${invalidTaskId}`).expect(HttpStatus.BAD_REQUEST);
+      await request(app.getHttpServer()).delete(`/v1/tasks/${invalidTaskId}`).expect(HttpStatus.BAD_REQUEST);
     });
 
     it('should return 400 when taskId is missing', async () => {
       // Act & Assert
-      await request(app.getHttpServer()).delete('/tasks/').expect(HttpStatus.NOT_FOUND);
+      await request(app.getHttpServer()).delete('/v1/tasks/').expect(HttpStatus.NOT_FOUND);
     });
   });
 });

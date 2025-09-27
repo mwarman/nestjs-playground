@@ -50,26 +50,32 @@ npm run start
 ## Project Structure
 
 ```
-├── src/                            # Main application source code
-│   ├── app.controller.ts           # App controller
-│   ├── app.controller.spec.ts      # App controller tests
-│   ├── app.module.ts               # App module
-│   ├── app.service.ts              # App service
-│   ├── main.ts                     # Application entry point
-│   └── config/                     # Configuration-related code
-│       └── configuration.ts        # Configuration loader
-├── test/                           # End-to-end tests
-│   ├── app.e2e-spec.ts             # E2E test spec
-│   └── jest-e2e.json               # Jest E2E config
-├── .env.example                    # Example environment variables
-├── package.json                    # Project metadata and scripts
-├── tsconfig.json                   # TypeScript configuration
-├── nest-cli.json                   # NestJS CLI configuration
-├── README.md                       # Project documentation
-├── .github/                        # GitHub Actions workflows and settings
-└── docs/                           # Project documentation
-   ├── configuration-guide.md       # Configuration guide
-   └── devops-guide.md              # DevOps guide
+├── src/                                 # Main application source code
+│   ├── app.module.ts                    # App module
+│   ├── main.ts                          # Application entry point
+│   ├── modules/
+│   │   └── tasks/                       # Example feature module
+│   │       ├── tasks.module.ts          # Tasks module definition
+│   │       ├── tasks.controller.ts      # Tasks controller
+│   │       ├── tasks.controller.spec.ts # Tasks controller unit tests
+│   │       ├── tasks.service.ts         # Tasks service
+│   │       ├── tasks.service.spec.ts    # Tasks service unit tests
+│   │       ├── dto/                     # DTOs for tasks
+│   │       └── entities/                # Entities for tasks
+│   └── config/                          # Configuration-related code
+│       └── configuration.ts             # Configuration loader
+├── test/                                # End-to-end tests
+│   ├── tasks.e2e-spec.ts                # E2E test spec
+│   └── jest-e2e.json                    # Jest E2E config
+├── .env.example                         # Example environment variables
+├── package.json                         # Project metadata and scripts
+├── tsconfig.json                        # TypeScript configuration
+├── nest-cli.json                        # NestJS CLI configuration
+├── README.md                            # Project documentation
+├── .github/                             # GitHub Actions workflows and settings
+└── docs/                                # Project documentation
+   ├── configuration-guide.md            # Configuration guide
+   └── devops-guide.md                   # DevOps guide
 ```
 
 ## Documentation Hub
