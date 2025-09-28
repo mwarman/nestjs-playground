@@ -53,6 +53,10 @@ jobs:
         working-directory: ./infrastructure
         run: npm run build
 
+      - name: Run infrastructure tests with coverage
+        working-directory: ./infrastructure
+        run: npm test:coverage
+
       - name: Create infrastructure .env file
         working-directory: ./infrastructure
         run: |
