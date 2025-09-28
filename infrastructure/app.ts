@@ -7,6 +7,7 @@ import { NetworkStack } from './stacks/network.stack';
 import { EcrStack } from './stacks/ecr.stack';
 import { DatabaseStack } from './stacks/database.stack';
 import { ComputeStack } from './stacks/compute.stack';
+import { ScheduledTaskStack } from './stacks/scheduled-task.stack';
 
 // Load and validate configuration
 const config = loadConfiguration();
@@ -71,11 +72,34 @@ const computeStack = new ComputeStack(app, `${config.CDK_APP_NAME}-compute-${con
   environment: config.CDK_ENVIRONMENT,
 });
 
+// Scheduled Task Stack (always created but with 0 desired count when hasScheduledTasks is false)
+const scheduledTaskStack = new ScheduledTaskStack(
+  app,
+  `${config.CDK_APP_NAME}-scheduled-task-${config.CDK_ENVIRONMENT}`,
+  {
+    description: 'Scheduled Task stack for NestJS Playground',
+    env,
+    vpc: networkStack.vpc,
+    cluster: computeStack.cluster,
+    repository: ecrStack.repository,
+    databaseSecret: databaseStack.secret,
+    appName: config.CDK_APP_NAME,
+    loggingLevel: config.CDK_APP_LOGGING_LEVEL,
+    taskMemoryMb: config.CDK_SCHEDULER_TASK_MEMORY_MB,
+    taskCpuUnits: config.CDK_SCHEDULER_TASK_CPU_UNITS,
+    scheduleTaskCleanupCron: config.CDK_SCHEDULE_TASK_CLEANUP_CRON,
+    hasScheduledTasks: config.hasScheduledTasks,
+    environment: config.CDK_ENVIRONMENT,
+  },
+);
+
 // Add dependencies
 databaseStack.addDependency(networkStack);
 computeStack.addDependency(networkStack);
 computeStack.addDependency(ecrStack);
 computeStack.addDependency(databaseStack);
+scheduledTaskStack.addDependency(computeStack);
+scheduledTaskStack.addDependency(databaseStack);
 
 // Add tags to the app
 Object.entries(tags).forEach(([key, value]) => {

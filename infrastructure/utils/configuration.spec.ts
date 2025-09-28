@@ -147,6 +147,72 @@ describe('Configuration Utility', () => {
         expect(config.CDK_TAG_OU).toBe('custom-ou');
         expect(config.CDK_TAG_OWNER).toBe('custom@example.com');
       });
+
+      it('should handle scheduled task configuration with defaults', () => {
+        // Arrange
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert
+        expect(config.CDK_SCHEDULE_TASK_CLEANUP_CRON).toBeUndefined();
+        expect(config.CDK_SCHEDULER_TASK_MEMORY_MB).toBe(512);
+        expect(config.CDK_SCHEDULER_TASK_CPU_UNITS).toBe(256);
+        expect(config.hasScheduledTasks).toBe(false); // Derived property
+      });
+
+      it('should handle scheduled task configuration when cron is provided', () => {
+        // Arrange
+        process.env.CDK_SCHEDULE_TASK_CLEANUP_CRON = '0 2 * * *';
+        process.env.CDK_SCHEDULER_TASK_MEMORY_MB = '1024';
+        process.env.CDK_SCHEDULER_TASK_CPU_UNITS = '512';
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert
+        expect(config.CDK_SCHEDULE_TASK_CLEANUP_CRON).toBe('0 2 * * *');
+        expect(config.CDK_SCHEDULER_TASK_MEMORY_MB).toBe(1024);
+        expect(config.CDK_SCHEDULER_TASK_CPU_UNITS).toBe(512);
+        expect(config.hasScheduledTasks).toBe(true); // Derived property
+      });
+
+      it('should set hasScheduledTasks to true when CDK_SCHEDULE_TASK_CLEANUP_CRON is defined', () => {
+        // Arrange
+        process.env.CDK_SCHEDULE_TASK_CLEANUP_CRON = '*/5 * * * *'; // Any valid cron value
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert - hasScheduledTasks should be derived from the presence of CDK_SCHEDULE_TASK_CLEANUP_CRON
+        expect(config.hasScheduledTasks).toBe(true);
+      });
+
+      it('should set hasScheduledTasks to false when CDK_SCHEDULE_TASK_CLEANUP_CRON is not defined', () => {
+        // Arrange - Explicitly do not set CDK_SCHEDULE_TASK_CLEANUP_CRON
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert - hasScheduledTasks should be false when cron is not configured
+        expect(config.hasScheduledTasks).toBe(false);
+      });
     });
 
     describe('with invalid configuration', () => {

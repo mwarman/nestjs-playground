@@ -19,20 +19,20 @@ This guide provides a comprehensive overview of the AWS infrastructure for the N
 
 ## Architecture Overview
 
-The NestJS Playground backend application is deployed on AWS using a modern, serverless-first architecture designed for cost optimization, scalability, and maintainability. The infrastructure is organized into four logical stacks:
+The NestJS Playground backend application is deployed on AWS using a modern, serverless-first architecture designed for cost optimization, scalability, and maintainability. The infrastructure is organized into five logical stacks:
 
 ### High-Level Architecture
 
 ```
-┌─────────────────┐    ┌───────────────────┐    ┌────────────────────┐
-│  Application    │    │      Data         │    │   Container Image   │
-│      Tier       │    │      Tier         │    │      Registry       │
-├─────────────────┤    ├───────────────────┤    ├────────────────────┤
-│ Route 53        │    │ Aurora Serverless │    │ Amazon ECR         │
-│ SSL Certificate │    │ v2 PostgreSQL     │    │ (ECR Stack)        │
-│ Load Balancer   │    │ Secrets Manager   │    │                    │
-│ ECS Fargate     │    │                   │    │                    │
-└─────────────────┘    └───────────────────┘    └────────────────────┘
+┌─────────────────┐    ┌───────────────────┐    ┌────────────────────┐    ┌─────────────────┐
+│  Application    │    │      Data         │    │   Container Image   │    │   Scheduled     │
+│      Tier       │    │      Tier         │    │      Registry       │    │     Tasks       │
+├─────────────────┤    ├───────────────────┤    ├────────────────────┤    ├─────────────────┤
+│ Route 53        │    │ Aurora Serverless │    │ Amazon ECR         │    │ ECS Fargate     │
+│ SSL Certificate │    │ v2 PostgreSQL     │    │ (ECR Stack)        │    │ (No Load        │
+│ Load Balancer   │    │ Secrets Manager   │    │                    │    │  Balancer)      │
+│ ECS Fargate     │    │                   │    │                    │    │ Background Jobs │
+└─────────────────┘    └───────────────────┘    └────────────────────┘    └─────────────────┘
 ```
 
 > **Note:** There is no presentation tier (such as CloudFront or web frontend) in this architecture. All components are backend/API only.
@@ -150,6 +150,49 @@ CDK_SERVICE_MIN_CAPACITY = 0; // Auto scaling minimum (configurable)
 CDK_SERVICE_MAX_CAPACITY = 4; // Auto scaling maximum (configurable)
 ```
 
+### Scheduled Task Stack (`scheduled-task.stack.ts`)
+
+**Purpose**: Runs background tasks and scheduled jobs using the same application image without HTTP load balancer overhead.
+
+**Key Resources**:
+
+- **Task Definition**: Fargate task identical to main application but configured for scheduled tasks
+- **ECS Service**: Runs exactly 1 instance (or 0 when disabled) for background job processing
+- **Security Group**: Restrictive egress-only rules (no inbound HTTP traffic needed)
+- **CloudWatch Log Group**: Separate logging for scheduled task output
+- **No Load Balancer**: Direct container execution without HTTP routing
+
+**Conditional Deployment**:
+
+- **Resources are only created when `CDK_SCHEDULE_TASK_CLEANUP_CRON` is defined**
+- **Service desired count**: 1 when scheduled tasks enabled, 0 when disabled
+- **Cost-effective**: No ALB, Target Groups, or HTTP listeners required
+
+**Configuration**:
+
+```typescript
+// Scheduled task environment variables (optional)
+CDK_SCHEDULE_TASK_CLEANUP_CRON = '0 2 * * *'; // Daily at 2 AM (optional)
+CDK_SCHEDULER_TASK_MEMORY_MB = 512; // Task memory in MB (default: 512)
+CDK_SCHEDULER_TASK_CPU_UNITS = 256; // Task CPU units (default: 256)
+```
+
+**Environment Variables Injected**:
+
+- `SCHEDULE_TASK_CLEANUP_CRON`: Cron expression for task scheduling
+- `NODE_ENV=production`: Production mode
+- `LOGGING_LEVEL`: Configured logging level
+- `LOGGING_FORMAT=json`: JSON logging format
+- Database connection secrets (same as main application)
+
+**Use Cases**:
+
+- Database cleanup tasks
+- Data aggregation jobs
+- Batch processing operations
+- Maintenance routines
+- Report generation
+
 ## Deployment Process
 
 ### Prerequisites
@@ -207,6 +250,7 @@ The CDK automatically handles dependencies, but the logical order is:
 2. **Database Stack**: Creates Aurora cluster in VPC
 3. **ECR Stack**: Creates ECR repository for container images
 4. **Compute Stack**: Deploys application with database connectivity and references ECR for images
+5. **Scheduled Task Stack**: Deploys background task service using compute cluster and ECR images
 
 **Stack Dependency Diagram:**
 
@@ -218,6 +262,8 @@ Database Stack
 ECR Stack
    ↓
 Compute Stack
+   ↓
+Scheduled Task Stack
 ```
 
 ## Resource Configuration
@@ -329,6 +375,21 @@ All configuration uses environment variables prefixed with `CDK_`:
 | `CDK_SERVICE_MIN_CAPACITY`  | Auto scaling minimum  | `0`     | 0-100     | `1`     |
 | `CDK_SERVICE_MAX_CAPACITY`  | Auto scaling maximum  | `4`     | 1-100     | `10`    |
 
+#### Scheduled Task Variables
+
+| Variable                         | Purpose                    | Default | Range     | Example       |
+| -------------------------------- | -------------------------- | ------- | --------- | ------------- |
+| `CDK_SCHEDULE_TASK_CLEANUP_CRON` | Cron expression (optional) | -       | -         | `"0 2 * * *"` |
+| `CDK_SCHEDULER_TASK_MEMORY_MB`   | Scheduler memory (MB)      | `512`   | 512-30720 | `1024`        |
+| `CDK_SCHEDULER_TASK_CPU_UNITS`   | Scheduler CPU units        | `256`   | 256-4096  | `512`         |
+
+**Notes:**
+
+- When `CDK_SCHEDULE_TASK_CLEANUP_CRON` is **not set**: No scheduled task resources are created
+- When `CDK_SCHEDULE_TASK_CLEANUP_CRON` is **set**: Scheduled task service runs with desired count = 1
+- The `hasScheduledTasks` derived property automatically controls resource creation
+- Cron format: `"minute hour day month day-of-week"` (e.g., `"0 2 * * *"` = daily at 2 AM)
+
 #### Tagging Variables
 
 | Variable        | Purpose             | Default            | Example             |
@@ -399,6 +460,17 @@ CDK_ENVIRONMENT=prd npm run deploy
 - **Desired Count**: Start with `CDK_SERVICE_DESIRED_COUNT=0` for development to minimize costs
 - **Log Retention**: 1-week retention (non-prod) / 1-month retention (production)
 
+### Scheduled Task Costs
+
+- **Conditional Deployment**: Resources only created when `CDK_SCHEDULE_TASK_CLEANUP_CRON` is defined
+- **No Load Balancer**: Eliminates ALB costs (~$16-22/month) for background tasks
+- **Single Instance**: Runs exactly 1 Fargate task when enabled (configurable CPU/memory)
+- **Default Configuration**: 256 CPU / 512 MB memory (same as main application)
+- **Cost Control**:
+  - **Development**: Leave `CDK_SCHEDULE_TASK_CLEANUP_CRON` unset to avoid costs
+  - **Production**: Only enable when scheduled tasks are actually needed
+- **Resource Sharing**: Uses same ECR images, VPC, and database as main application
+
 ### Network Costs
 
 - **Existing Resources**: Leverages existing VPC and certificates
@@ -417,10 +489,11 @@ Monitor costs using:
 
 ### Application Monitoring
 
-1. **Health Checks**: ALB health checks on `/health` endpoint
-2. **Container Logs**: Centralized logging in CloudWatch
-3. **Container Insights**: ECS cluster-level metrics
-4. **Custom Metrics**: Application-specific metrics via CloudWatch
+1. **Health Checks**: ALB health checks on `/health` endpoint (main application)
+2. **Container Logs**: Centralized logging in CloudWatch for both main and scheduled task services
+3. **Container Insights**: ECS cluster-level metrics for all services
+4. **Scheduled Task Logs**: Separate log group (`/ecs/{appName}-scheduler-{environment}`) for background job output
+5. **Custom Metrics**: Application-specific metrics via CloudWatch
 
 ### Infrastructure Monitoring
 
@@ -432,10 +505,12 @@ Monitor costs using:
 
 Set up alerts for:
 
-- High CPU utilization (>80%)
+- High CPU utilization (>80%) for both main and scheduled task services
 - Database connection failures
-- Application health check failures
-- High error rates in logs
+- Application health check failures (main service)
+- Scheduled task failures or unexpected exits
+- High error rates in logs (both services)
+- Scheduled task service not running when expected
 
 ## Disaster Recovery
 
@@ -490,6 +565,13 @@ Set up alerts for:
    - Check security group rules for ALB → ECS communication
    - Verify application is listening on correct port
 
+4. **Scheduled Task Issues**:
+   - Verify `CDK_SCHEDULE_TASK_CLEANUP_CRON` is set if tasks are expected
+   - Check scheduled task service desired count (should be 1 when enabled, 0 when disabled)
+   - Review scheduled task logs in separate log group: `/ecs/{appName}-scheduler-{environment}`
+   - Ensure scheduled task service has database connectivity
+   - Verify cron expression format is valid
+
 ### Debugging Commands
 
 ```bash
@@ -502,10 +584,20 @@ aws ecs describe-services \
   --cluster nestjs-playground-dev \
   --services nestjs-playground-dev
 
-# Get recent logs
+# Get recent application logs
 aws logs filter-log-events \
   --log-group-name /ecs/nestjs-playground-dev \
   --start-time $(date -d '1 hour ago' +%s)000
+
+# Get scheduled task logs
+aws logs filter-log-events \
+  --log-group-name /ecs/nestjs-playground-scheduler-dev \
+  --start-time $(date -d '1 hour ago' +%s)000
+
+# Check scheduled task service status
+aws ecs describe-services \
+  --cluster nestjs-playground-dev \
+  --services nestjs-playground-scheduler-dev
 ```
 
 ## Best Practices
@@ -524,6 +616,7 @@ aws logs filter-log-events \
 2. **Progressive Deployment**: Deploy to dev → qa → production
 3. **Infrastructure Validation**: Use `cdk diff` before deployments
 4. **Resource Cleanup**: Regularly destroy development environments to save costs
+5. **Scheduled Task Management**: Only enable scheduled tasks (`CDK_SCHEDULE_TASK_CLEANUP_CRON`) when actually needed to avoid unnecessary costs
 
 ### Security Best Practices
 
@@ -541,7 +634,7 @@ aws logs filter-log-events \
 
 ### Code Organization
 
-1. **Stack Separation**: Maintain logical separation between network, database, ECR, and compute
+1. **Stack Separation**: Maintain logical separation between network, database, ECR, compute, and scheduled tasks
 2. **Configuration Management**: Use environment variables for all environment-specific values
 3. **Version Control**: Tag infrastructure releases for rollback capability
 4. **Code Reviews**: Review all infrastructure changes before deployment

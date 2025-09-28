@@ -26,6 +26,11 @@ const configurationSchema = z
     CDK_SERVICE_MIN_CAPACITY: z.coerce.number().int().min(0).default(0),
     CDK_SERVICE_MAX_CAPACITY: z.coerce.number().int().positive().default(4),
 
+    // Scheduled task configuration
+    CDK_SCHEDULE_TASK_CLEANUP_CRON: z.string().optional(),
+    CDK_SCHEDULER_TASK_MEMORY_MB: z.coerce.number().int().positive().default(512),
+    CDK_SCHEDULER_TASK_CPU_UNITS: z.coerce.number().int().positive().default(256),
+
     // Database configuration
     CDK_DATABASE_NAME: z.string().min(1).default('nestjs_playground'),
     CDK_DATABASE_USERNAME: z.string().min(1).default('postgres'),
@@ -44,6 +49,11 @@ const configurationSchema = z
     CDK_TAG_OU: z.string().default('engineering'),
     CDK_TAG_OWNER: z.string().default('team@example.com'),
   })
+  .transform((data) => ({
+    ...data,
+    // Derived property: hasScheduledTasks is true when CDK_SCHEDULE_TASK_CLEANUP_CRON is defined
+    hasScheduledTasks: Boolean(data.CDK_SCHEDULE_TASK_CLEANUP_CRON),
+  }))
   .refine((data) => data.CDK_SERVICE_MIN_CAPACITY <= data.CDK_SERVICE_MAX_CAPACITY, {
     message: 'Service min capacity must be less than or equal to max capacity',
     path: ['CDK_SERVICE_MIN_CAPACITY'],

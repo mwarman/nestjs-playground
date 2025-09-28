@@ -6,23 +6,24 @@ This directory contains the AWS CDK infrastructure code for the NestJS Playgroun
 
 ```
 infrastructure/
-├── app.ts                 # CDK app entry point
-├── cdk.json              # CDK configuration
-├── package.json          # NPM dependencies and scripts
-├── tsconfig.json         # TypeScript configuration
-├── .env.example          # Example environment variables
-├── .env                  # Environment variables (create from .env.example)
-├── README.md             # This file
-└── stacks/               # CDK stack definitions
-   ├── network.stack.ts  # Network infrastructure (VPC, Route 53, SSL)
-   ├── database.stack.ts # Database infrastructure (Aurora Serverless v2)
-   ├── compute.stack.ts  # Compute infrastructure (ECS, ALB)
-   └── ecr.stack.ts      # ECR repository stack (container registry)
+├── app.ts                      # CDK app entry point
+├── cdk.json                   # CDK configuration
+├── package.json               # NPM dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+├── .env.example               # Example environment variables
+├── .env                       # Environment variables (create from .env.example)
+├── README.md                  # This file
+└── stacks/                    # CDK stack definitions
+   ├── network.stack.ts       # Network infrastructure (VPC, Route 53, SSL)
+   ├── database.stack.ts      # Database infrastructure (Aurora Serverless v2)
+   ├── compute.stack.ts       # Compute infrastructure (ECS, ALB)
+   ├── ecr.stack.ts           # ECR repository stack (container registry)
+   └── scheduled-task.stack.ts # Scheduled task infrastructure (optional)
 ```
 
 ## Architecture Overview
 
-The infrastructure is organized into four logical stacks:
+The infrastructure is organized into five logical stacks:
 
 ### 1. Network Stack (`network.stack.ts`)
 
@@ -53,6 +54,15 @@ The infrastructure is organized into four logical stacks:
 - **Auto Scaling**: CPU-based scaling (1-4 instances, 70% CPU threshold)
 - **Route 53**: DNS alias record pointing to the load balancer
 
+### 5. Scheduled Task Stack (`scheduled-task.stack.ts`)
+
+- **Conditional Deployment**: Only creates resources when `CDK_SCHEDULE_TASK_CLEANUP_CRON` is configured
+- **ECS Fargate Service**: Dedicated service for running scheduled tasks (1 instance)
+- **No Load Balancer**: Service doesn't receive HTTP requests, only runs scheduled processes
+- **Automatic Restart**: ECS service ensures the instance restarts if it fails
+- **Isolated Logging**: Separate CloudWatch log group for scheduled task logs
+- **Database Access**: Same database credentials as the main application
+
 ## Prerequisites
 
 Before deploying the infrastructure, ensure you have:
@@ -71,6 +81,7 @@ Before deploying the infrastructure, ensure you have:
    ```
 
 2. Update `.env` with your specific values:
+
    ```bash
    # Required variables
    CDK_ACCOUNT=123456789012          # Your AWS account ID
@@ -81,9 +92,33 @@ Before deploying the infrastructure, ensure you have:
    CDK_HOSTED_ZONE_NAME=example.com  # Hosted zone domain name
    CDK_CERTIFICATE_ARN=arn:aws:acm:... # Existing SSL certificate ARN
    CDK_DOMAIN_NAME=nestjs-playground-api # Subdomain for the application
+
+   # Optional: Scheduled Task Configuration
+   CDK_SCHEDULE_TASK_CLEANUP_CRON=*/10 * * * * * # Cron expression for task cleanup
    ```
 
 All environment variables are prefixed with `CDK_` and documented in `.env.example`.
+
+### Scheduled Task Configuration
+
+The scheduled task infrastructure is optional and controlled by the `CDK_SCHEDULE_TASK_CLEANUP_CRON` environment variable:
+
+- **When configured**: Creates a dedicated ECS service that runs exactly 1 instance for scheduled tasks
+- **When not configured**: Skips scheduled task stack creation entirely
+- **Cron format**: Uses 6-field cron expressions (second minute hour day month weekday)
+- **Examples**:
+  - `*/10 * * * * *` - Every 10 seconds
+  - `0 * * * * *` - Every minute
+  - `0 0 * * * *` - Every hour
+  - `0 0 0 * * *` - Every day at midnight
+
+The scheduled task service:
+
+- Runs the same application image as the main service
+- Has access to the same database
+- Logs to a separate CloudWatch log group (`/ecs/app-scheduler-env`)
+- Automatically restarts if the instance fails
+- Does not receive HTTP traffic (no load balancer)
 
 ## Getting Started
 
@@ -146,11 +181,14 @@ Database Stack
 ECR Stack
    ↓
 Compute Stack
+   ↓
+Scheduled Task Stack (optional)
 ```
 
 - **Database Stack** depends on Network Stack (for VPC)
 - **ECR Stack** is independent but typically referenced by Compute Stack for container images
 - **Compute Stack** depends on Network Stack (for VPC, DNS), Database Stack (for database connection), and ECR Stack (for container image repository)
+- **Scheduled Task Stack** depends on Compute Stack (for ECS cluster), Database Stack (for database connection), and ECR Stack (for container image repository)
 
 ## Cost Optimization Features
 
@@ -168,6 +206,13 @@ The infrastructure is designed with cost optimization in mind:
 - Fargate with minimal CPU/memory allocation (256 CPU, 512 MB)
 - 1-week log retention
 - Cost-optimized autoscaling (1-4 instances)
+
+### Scheduled Tasks
+
+- Single instance only (no autoscaling)
+- Same minimal resource allocation as main service
+- Conditional deployment (only when needed)
+- Separate log group with same retention policy
 
 ### Networking
 
@@ -208,6 +253,12 @@ The infrastructure is designed with cost optimization in mind:
 4. **Certificate Problems**
    - Ensure `CDK_CERTIFICATE_ARN` is valid and in the correct region
    - Certificate must cover the domain specified in `CDK_DOMAIN_NAME`
+
+5. **Scheduled Task Issues**
+   - If scheduled tasks aren't running, check the cron expression format (6 fields)
+   - Verify `CDK_SCHEDULE_TASK_CLEANUP_CRON` is set correctly
+   - Check CloudWatch logs for the scheduled task service
+   - Ensure the scheduled task service is running in ECS console
 
 ### Debugging Commands
 
