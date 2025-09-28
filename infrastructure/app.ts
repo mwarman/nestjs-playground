@@ -2,92 +2,55 @@
 import 'dotenv/config';
 import * as cdk from 'aws-cdk-lib';
 
+import { loadConfiguration, getEnvironmentConfig, getCommonTags } from './utils/configuration';
 import { NetworkStack } from './stacks/network.stack';
 import { EcrStack } from './stacks/ecr.stack';
 import { DatabaseStack } from './stacks/database.stack';
 import { ComputeStack } from './stacks/compute.stack';
 
-// Environment configuration from environment variables
-const appName = process.env.CDK_APP_NAME || 'nestjs-playground';
-const appPort = parseInt(process.env.CDK_APP_PORT || '3000', 10);
-const loggingLevel = process.env.CDK_APP_LOGGING_LEVEL || 'info';
-const corsAllowedOrigin = process.env.CDK_APP_CORS_ALLOWED_ORIGIN || '*';
-const environment = process.env.CDK_ENVIRONMENT || 'dev';
-const account = process.env.CDK_ACCOUNT || process.env.CDK_DEFAULT_ACCOUNT;
-const region = process.env.CDK_REGION || process.env.CDK_DEFAULT_REGION;
-
-// Compute configuration
-const taskMemoryMb = parseInt(process.env.CDK_TASK_MEMORY_MB || '512', 10);
-const taskCpuUnits = parseInt(process.env.CDK_TASK_CPU_UNITS || '256', 10);
-const serviceDesiredCount = parseInt(process.env.CDK_SERVICE_DESIRED_COUNT || '0', 10);
-const serviceMinCapacity = parseInt(process.env.CDK_SERVICE_MIN_CAPACITY || '0', 10);
-const serviceMaxCapacity = parseInt(process.env.CDK_SERVICE_MAX_CAPACITY || '4', 10);
-
-// Database configuration
-const databaseMinCapacity = parseFloat(process.env.CDK_DATABASE_MIN_CAPACITY || '0.5');
-const databaseMaxCapacity = parseFloat(process.env.CDK_DATABASE_MAX_CAPACITY || '1');
-
-// Validate required environment variables
-const requiredEnvVars = ['CDK_HOSTED_ZONE_ID', 'CDK_HOSTED_ZONE_NAME', 'CDK_CERTIFICATE_ARN', 'CDK_DOMAIN_NAME'];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    throw new Error(`Required environment variable ${envVar} is not set`);
-  }
-}
-
-// Environment configuration
-const env = {
-  account,
-  region,
-};
-
-// Common tags for all resources
-const tags = {
-  App: process.env.CDK_TAG_APP || appName,
-  Env: process.env.CDK_TAG_ENV || environment,
-  OU: process.env.CDK_TAG_OU || 'engineering',
-  Owner: process.env.CDK_TAG_OWNER || 'team@example.com',
-};
+// Load and validate configuration
+const config = loadConfiguration();
+const env = getEnvironmentConfig(config);
+const tags = getCommonTags(config);
 
 // Create CDK app
 const app = new cdk.App();
 
 // Network Stack
-const networkStack = new NetworkStack(app, `${appName}-network-${environment}`, {
+const networkStack = new NetworkStack(app, `${config.CDK_APP_NAME}-network-${config.CDK_ENVIRONMENT}`, {
   description: 'Network stack for NestJS Playground',
   env,
-  hostedZoneId: process.env.CDK_HOSTED_ZONE_ID!,
-  hostedZoneName: process.env.CDK_HOSTED_ZONE_NAME!,
-  certificateArn: process.env.CDK_CERTIFICATE_ARN!,
-  domainName: process.env.CDK_DOMAIN_NAME!,
-  appName,
-  environment,
+  hostedZoneId: config.CDK_HOSTED_ZONE_ID,
+  hostedZoneName: config.CDK_HOSTED_ZONE_NAME,
+  certificateArn: config.CDK_CERTIFICATE_ARN,
+  domainName: config.CDK_DOMAIN_NAME,
+  appName: config.CDK_APP_NAME,
+  environment: config.CDK_ENVIRONMENT,
 });
 
 // ECR Stack
-const ecrStack = new EcrStack(app, `${appName}-ecr-${environment}`, {
+const ecrStack = new EcrStack(app, `${config.CDK_APP_NAME}-ecr-${config.CDK_ENVIRONMENT}`, {
   description: 'ECR stack for NestJS Playground',
   env,
-  appName,
-  environment,
+  appName: config.CDK_APP_NAME,
+  environment: config.CDK_ENVIRONMENT,
 });
 
 // Database Stack
-const databaseStack = new DatabaseStack(app, `${appName}-database-${environment}`, {
+const databaseStack = new DatabaseStack(app, `${config.CDK_APP_NAME}-database-${config.CDK_ENVIRONMENT}`, {
   description: 'Database stack for NestJS Playground',
   env,
   vpc: networkStack.vpc,
-  databaseName: process.env.CDK_DATABASE_NAME || 'nestjs_playground',
-  databaseUsername: process.env.CDK_DATABASE_USERNAME || 'postgres',
-  databaseMinCapacity,
-  databaseMaxCapacity,
-  appName,
-  environment,
+  databaseName: config.CDK_DATABASE_NAME,
+  databaseUsername: config.CDK_DATABASE_USERNAME,
+  databaseMinCapacity: config.CDK_DATABASE_MIN_CAPACITY,
+  databaseMaxCapacity: config.CDK_DATABASE_MAX_CAPACITY,
+  appName: config.CDK_APP_NAME,
+  environment: config.CDK_ENVIRONMENT,
 });
 
 // Compute Stack
-const computeStack = new ComputeStack(app, `${appName}-compute-${environment}`, {
+const computeStack = new ComputeStack(app, `${config.CDK_APP_NAME}-compute-${config.CDK_ENVIRONMENT}`, {
   description: 'Compute stack for NestJS Playground',
   env,
   vpc: networkStack.vpc,
@@ -96,16 +59,16 @@ const computeStack = new ComputeStack(app, `${appName}-compute-${environment}`, 
   hostedZone: networkStack.hostedZone,
   certificate: networkStack.certificate,
   fqdn: networkStack.fqdn,
-  appName,
-  appPort,
-  loggingLevel,
-  corsAllowedOrigin,
-  taskMemoryMb,
-  taskCpuUnits,
-  serviceDesiredCount,
-  serviceMinCapacity,
-  serviceMaxCapacity,
-  environment,
+  appName: config.CDK_APP_NAME,
+  appPort: config.CDK_APP_PORT,
+  loggingLevel: config.CDK_APP_LOGGING_LEVEL,
+  corsAllowedOrigin: config.CDK_APP_CORS_ALLOWED_ORIGIN,
+  taskMemoryMb: config.CDK_TASK_MEMORY_MB,
+  taskCpuUnits: config.CDK_TASK_CPU_UNITS,
+  serviceDesiredCount: config.CDK_SERVICE_DESIRED_COUNT,
+  serviceMinCapacity: config.CDK_SERVICE_MIN_CAPACITY,
+  serviceMaxCapacity: config.CDK_SERVICE_MAX_CAPACITY,
+  environment: config.CDK_ENVIRONMENT,
 });
 
 // Add dependencies
