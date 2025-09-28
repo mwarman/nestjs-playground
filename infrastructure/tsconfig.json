@@ -22,5 +22,6 @@
     "typeRoots": ["./node_modules/@types"],
     "outDir": "./cdk.out"
   },
-  "exclude": ["cdk.out"]
+  "exclude": ["cdk.out", "node_modules", "coverage", "**/*.js"],
+  "include": ["**/*.ts", "jest.config.ts"]
 }

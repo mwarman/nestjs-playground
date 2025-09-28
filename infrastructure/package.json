@@ -7,6 +7,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "cdk": "cdk",
     "deploy": "cdk deploy",
     "deploy:all": "cdk deploy --all",
