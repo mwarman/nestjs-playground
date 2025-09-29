@@ -232,7 +232,7 @@ The infrastructure is designed with cost optimization in mind:
 - ECS container logs sent to CloudWatch
 - Application Load Balancer access logs
 - Container insights enabled on ECS cluster
-- Health checks configured for application endpoint (`/health`)
+- Health checks configured for application endpoint (`/v1/health`)
 
 ## Troubleshooting
 

@@ -130,7 +130,7 @@ DB_DATABASE: nestjs_playground
 - **Service**: Maintains desired instance count with rolling deployments
 - **Auto Scaling**: CPU-based scaling (70% threshold, configurable min/max instances)
 - **Application Load Balancer**: Internet-facing with HTTPS termination
-- **Target Group**: Health checks on `/health` endpoint
+- **Target Group**: Health checks on `/v1/health` endpoint
 - **Listeners**:
   - Port 443 (HTTPS): Routes to application
   - Port 80 (HTTP): Redirects to HTTPS
@@ -489,7 +489,7 @@ Monitor costs using:
 
 ### Application Monitoring
 
-1. **Health Checks**: ALB health checks on `/health` endpoint (main application)
+1. **Health Checks**: ALB health checks on `/v1/health` endpoint (main application)
 2. **Container Logs**: Centralized logging in CloudWatch for both main and scheduled task services
 3. **Container Insights**: ECS cluster-level metrics for all services
 4. **Scheduled Task Logs**: Separate log group (`/ecs/{appName}-scheduler-{environment}`) for background job output
@@ -561,7 +561,7 @@ Set up alerts for:
    - Verify database connectivity and credentials
 
 3. **Health Check Failures**:
-   - Confirm `/health` endpoint is responding
+   - Confirm `/v1/health` endpoint is responding
    - Check security group rules for ALB → ECS communication
    - Verify application is listening on correct port
 
