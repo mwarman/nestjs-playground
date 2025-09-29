@@ -175,15 +175,28 @@ jobs:
           CLUSTER_NAME="nestjs-playground-dev"
           SERVICE_NAME="nestjs-playground-scheduler-dev"
 
-          echo "🔄 Forcing ECS service update to deploy latest image..."
-          aws ecs update-service \
+          echo "� Checking if scheduled task service exists..."
+          if aws ecs describe-services \
             --cluster $CLUSTER_NAME \
-            --service $SERVICE_NAME \
-            --force-new-deployment \
-            --region ${{ vars.AWS_REGION }}
+            --services $SERVICE_NAME \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'services[?status==`ACTIVE`].serviceName' \
+            --output text | grep -q "$SERVICE_NAME"; then
+            
+            echo "✅ Scheduled task service found, proceeding with deployment..."
+            echo "�🔄 Forcing ECS service update to deploy latest image..."
+            aws ecs update-service \
+              --cluster $CLUSTER_NAME \
+              --service $SERVICE_NAME \
+              --force-new-deployment \
+              --region ${{ vars.AWS_REGION }}
 
-          echo "✅ ECS service update triggered successfully"
-          echo "⏳ ECS will now pull and deploy the latest Docker image"
+            echo "✅ ECS service update triggered successfully"
+            echo "⏳ ECS will now pull and deploy the latest Docker image"
+          else
+            echo "⚠️ Scheduled task service not found or not active, skipping deployment..."
+            echo "💡 This is normal if the scheduled task stack was not deployed"
+          fi
 
       # Step 16: Clean up sensitive infrastructure files
       - name: Clean up sensitive files
