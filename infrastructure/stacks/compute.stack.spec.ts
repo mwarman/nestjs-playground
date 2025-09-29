@@ -156,7 +156,7 @@ describe('ComputeStack', () => {
       vpc: mockVpc,
       healthCheck: {
         enabled: true,
-        path: '/health',
+        path: '/v1/health',
         protocol: elbv2.Protocol.HTTP,
         port: defaultProps.appPort.toString(),
         healthyHttpCodes: '200',
@@ -386,7 +386,7 @@ describe('ComputeStack', () => {
         Protocol: 'HTTP',
         TargetType: 'ip',
         HealthCheckEnabled: true,
-        HealthCheckPath: '/health',
+        HealthCheckPath: '/v1/health',
         HealthCheckProtocol: 'HTTP',
         HealthCheckPort: '3000',
         HealthyThresholdCount: 2,

@@ -145,8 +145,15 @@ jobs:
           npx cdk deploy nestjs-playground-compute-dev --require-approval never
           echo "✅ Compute stack deployed successfully"
 
+      - name: Deploy Scheduled Task stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Scheduled Task stack..."
+          npx cdk deploy nestjs-playground-scheduled-task-dev --require-approval never
+          echo "✅ Scheduled Task stack deployed successfully"
+
       # Step 15: Trigger a deployment of the latest Docker image in AWS ECS
-      - name: Update ECS service with latest image
+      - name: Update ECS API service with latest image
         run: |
           # Get ECS cluster and service names
           CLUSTER_NAME="nestjs-playground-dev"
@@ -161,6 +168,35 @@ jobs:
 
           echo "✅ ECS service update triggered successfully"
           echo "⏳ ECS will now pull and deploy the latest Docker image"
+
+      - name: Update ECS Scheduled Task service with latest image
+        run: |
+          # Get ECS cluster and service names
+          CLUSTER_NAME="nestjs-playground-dev"
+          SERVICE_NAME="nestjs-playground-scheduler-dev"
+
+          echo "� Checking if scheduled task service exists..."
+          if aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'services[?status==`ACTIVE`].serviceName' \
+            --output text | grep -q "$SERVICE_NAME"; then
+            
+            echo "✅ Scheduled task service found, proceeding with deployment..."
+            echo "�🔄 Forcing ECS service update to deploy latest image..."
+            aws ecs update-service \
+              --cluster $CLUSTER_NAME \
+              --service $SERVICE_NAME \
+              --force-new-deployment \
+              --region ${{ vars.AWS_REGION }}
+
+            echo "✅ ECS service update triggered successfully"
+            echo "⏳ ECS will now pull and deploy the latest Docker image"
+          else
+            echo "⚠️ Scheduled task service not found or not active, skipping deployment..."
+            echo "💡 This is normal if the scheduled task stack was not deployed"
+          fi
 
       # Step 16: Clean up sensitive infrastructure files
       - name: Clean up sensitive files

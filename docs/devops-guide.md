@@ -93,6 +93,7 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
      - Deploy Network stack (VPC, subnets, security groups)
      - Deploy Database stack (RDS Aurora Serverless)
      - Deploy Compute stack (ECS Fargate service)
+     - Deploy Scheduled Task stack (ECS Fargate service)
      - Force ECS service update to deploy latest image
   4. **Cleanup:**
      - Remove sensitive files (`.env`, `cdk.out`)
