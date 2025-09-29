@@ -153,11 +153,27 @@ jobs:
           echo "✅ Scheduled Task stack deployed successfully"
 
       # Step 15: Trigger a deployment of the latest Docker image in AWS ECS
-      - name: Update ECS service with latest image
+      - name: Update ECS API service with latest image
         run: |
           # Get ECS cluster and service names
           CLUSTER_NAME="nestjs-playground-dev"
           SERVICE_NAME="nestjs-playground-dev"
+
+          echo "🔄 Forcing ECS service update to deploy latest image..."
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION }}
+
+          echo "✅ ECS service update triggered successfully"
+          echo "⏳ ECS will now pull and deploy the latest Docker image"
+
+      - name: Update ECS Scheduled Task service with latest image
+        run: |
+          # Get ECS cluster and service names
+          CLUSTER_NAME="nestjs-playground-dev"
+          SERVICE_NAME="nestjs-playground-scheduler-dev"
 
           echo "🔄 Forcing ECS service update to deploy latest image..."
           aws ecs update-service \
