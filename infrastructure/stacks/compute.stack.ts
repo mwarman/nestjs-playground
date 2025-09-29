@@ -128,7 +128,7 @@ export class ComputeStack extends cdk.Stack {
       targetType: elbv2.TargetType.IP,
       healthCheck: {
         enabled: true,
-        path: '/health',
+        path: '/v1/health',
         protocol: elbv2.Protocol.HTTP,
         port: props.appPort.toString(),
         healthyThresholdCount: 2,
