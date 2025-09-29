@@ -25,8 +25,8 @@ The NestJS Playground backend application is deployed on AWS using a modern, ser
 
 ```
 ┌─────────────────┐    ┌───────────────────┐    ┌────────────────────┐    ┌─────────────────┐
-│  Application    │    │      Data         │    │   Container Image   │    │   Scheduled     │
-│      Tier       │    │      Tier         │    │      Registry       │    │     Tasks       │
+│  Application    │    │      Data         │    │   Container Image  │    │   Scheduled     │
+│      Tier       │    │      Tier         │    │      Registry      │    │     Tasks       │
 ├─────────────────┤    ├───────────────────┤    ├────────────────────┤    ├─────────────────┤
 │ Route 53        │    │ Aurora Serverless │    │ Amazon ECR         │    │ ECS Fargate     │
 │ SSL Certificate │    │ v2 PostgreSQL     │    │ (ECR Stack)        │    │ (No Load        │
