@@ -145,6 +145,13 @@ jobs:
           npx cdk deploy nestjs-playground-compute-dev --require-approval never
           echo "✅ Compute stack deployed successfully"
 
+      - name: Deploy Scheduled Task stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Scheduled Task stack..."
+          npx cdk deploy nestjs-playground-scheduled-task-dev --require-approval never
+          echo "✅ Scheduled Task stack deployed successfully"
+
       # Step 15: Trigger a deployment of the latest Docker image in AWS ECS
       - name: Update ECS service with latest image
         run: |
