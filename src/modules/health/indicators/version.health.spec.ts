@@ -57,7 +57,7 @@ describe('VersionHealthIndicator', () => {
       mockHealthCheck.up.mockReturnValue(expectedUpResult);
 
       // Act
-      const result = indicator.isHealthy(key);
+      const result = indicator.getVersion(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
@@ -73,7 +73,7 @@ describe('VersionHealthIndicator', () => {
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.isHealthy(key);
+      const result = indicator.getVersion(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
@@ -89,7 +89,7 @@ describe('VersionHealthIndicator', () => {
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.isHealthy(key);
+      const result = indicator.getVersion(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
@@ -105,7 +105,7 @@ describe('VersionHealthIndicator', () => {
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.isHealthy(key);
+      const result = indicator.getVersion(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
@@ -120,7 +120,7 @@ describe('VersionHealthIndicator', () => {
       mockHealthCheck.up.mockReturnValue({ status: 'up', version: '0.1.0' });
 
       // Act
-      indicator.isHealthy(customKey);
+      indicator.getVersion(customKey);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(customKey);

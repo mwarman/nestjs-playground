@@ -22,7 +22,7 @@ describe('HealthController', () => {
     };
 
     const versionHealthIndicatorMock = {
-      isHealthy: jest.fn(),
+      getVersion: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -68,7 +68,7 @@ describe('HealthController', () => {
       const versionHealthResult = { version: { status: 'up', version: '0.1.0' } };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue(databaseHealthResult);
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue(versionHealthResult);
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue(versionHealthResult);
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -89,7 +89,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -104,7 +104,7 @@ describe('HealthController', () => {
       expect(typeOrmHealthIndicator.pingCheck).toHaveBeenCalledWith('database');
     });
 
-    it('should call VersionHealthIndicator.isHealthy with correct parameters', async () => {
+    it('should call VersionHealthIndicator.getVersion with correct parameters', async () => {
       // Arrange
       const expectedResult: HealthCheckResult = {
         status: 'ok',
@@ -113,7 +113,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -124,7 +124,7 @@ describe('HealthController', () => {
       checkCalls[1]();
 
       // Assert
-      expect(versionHealthIndicator.isHealthy).toHaveBeenCalledWith('version');
+      expect(versionHealthIndicator.getVersion).toHaveBeenCalledWith('version');
     });
 
     it('should handle health check failures gracefully', async () => {
@@ -143,7 +143,7 @@ describe('HealthController', () => {
       };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockRejectedValue(new Error('Connection failed'));
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue({
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({
         version: { status: 'down', error: 'Version not found' },
       });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
@@ -165,7 +165,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -188,7 +188,7 @@ describe('HealthController', () => {
       };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.isHealthy as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(mockHealthResult);
 
       // Act

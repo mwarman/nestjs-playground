@@ -9,7 +9,12 @@ export class VersionHealthIndicator extends HealthIndicatorService {
     super();
   }
 
-  isHealthy(key: string) {
+  /**
+   * Get the application version.
+   * @param key - The key to identify the version health check
+   * @returns The version information
+   */
+  getVersion(key: string) {
     const indicator = this.healthIndicatorService.check(key);
 
     if (!version) {
