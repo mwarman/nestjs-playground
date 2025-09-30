@@ -22,7 +22,7 @@ describe('HealthController', () => {
     };
 
     const versionHealthIndicatorMock = {
-      getVersion: jest.fn(),
+      getValue: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -55,20 +55,20 @@ describe('HealthController', () => {
         status: 'ok',
         info: {
           database: { status: 'up' },
-          version: { status: 'up', version: '0.1.0' },
+          version: { status: 'up', value: '0.1.0' },
         },
         error: {},
         details: {
           database: { status: 'up' },
-          version: { status: 'up', version: '0.1.0' },
+          version: { status: 'up', value: '0.1.0' },
         },
       };
 
       const databaseHealthResult: HealthIndicatorResult = { database: { status: 'up' } };
-      const versionHealthResult = { version: { status: 'up', version: '0.1.0' } };
+      const versionHealthResult = { version: { status: 'up', value: '0.1.0' } };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue(databaseHealthResult);
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue(versionHealthResult);
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue(versionHealthResult);
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -89,7 +89,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue({ version: { status: 'up', value: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -113,7 +113,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue({ version: { status: 'up', value: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -124,7 +124,7 @@ describe('HealthController', () => {
       checkCalls[1]();
 
       // Assert
-      expect(versionHealthIndicator.getVersion).toHaveBeenCalledWith('version');
+      expect(versionHealthIndicator.getValue).toHaveBeenCalledWith('version');
     });
 
     it('should handle health check failures gracefully', async () => {
@@ -134,17 +134,17 @@ describe('HealthController', () => {
         info: {},
         error: {
           database: { status: 'down', message: 'Connection failed' },
-          version: { status: 'down', error: 'Version not found' },
+          version: { status: 'down', error: 'Version not found or not valid semver' },
         },
         details: {
           database: { status: 'down', message: 'Connection failed' },
-          version: { status: 'down', error: 'Version not found' },
+          version: { status: 'down', error: 'Version not found or not valid semver' },
         },
       };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockRejectedValue(new Error('Connection failed'));
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({
-        version: { status: 'down', error: 'Version not found' },
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue({
+        version: { status: 'down', error: 'Version not found or not valid semver' },
       });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
@@ -165,7 +165,7 @@ describe('HealthController', () => {
         details: {},
       };
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue({ version: { status: 'up', value: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(expectedResult);
 
       // Act
@@ -188,7 +188,7 @@ describe('HealthController', () => {
       };
 
       (typeOrmHealthIndicator.pingCheck as jest.Mock).mockResolvedValue({ database: { status: 'up' } });
-      (versionHealthIndicator.getVersion as jest.Mock).mockReturnValue({ version: { status: 'up', version: '0.1.0' } });
+      (versionHealthIndicator.getValue as jest.Mock).mockReturnValue({ version: { status: 'up', value: '0.1.0' } });
       (healthCheckService.check as jest.Mock).mockResolvedValue(mockHealthResult);
 
       // Act

@@ -1,7 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorService } from '@nestjs/terminus';
+import { valid } from 'semver';
 
 import { version } from '../../../../package.json';
+
+/**
+ * Additional data returned when the version health check is healthy.
+ */
+type VersionHealthUpAdditionalData = {
+  value: string;
+};
+
+/**
+ * Additional data returned when the version health check is unhealthy.
+ */
+type VersionHealthDownAdditionalData = {
+  error: string;
+};
 
 @Injectable()
 export class VersionHealthIndicator extends HealthIndicatorService {
@@ -10,17 +25,19 @@ export class VersionHealthIndicator extends HealthIndicatorService {
   }
 
   /**
-   * Get the application version.
+   * Get the application version value. If the version is not found or not a valid semver, it returns a down status.
    * @param key - The key to identify the version health check
    * @returns The version information
    */
-  getVersion(key: string) {
+  getValue(key: string) {
     const indicator = this.healthIndicatorService.check(key);
 
-    if (!version) {
-      return indicator.down({ error: 'Version not found' });
+    const value = valid(version) ? version : null;
+
+    if (!value) {
+      return indicator.down<VersionHealthDownAdditionalData>({ error: 'Version not found or not valid semver' });
     }
 
-    return indicator.up({ version });
+    return indicator.up<VersionHealthUpAdditionalData>({ value });
   }
 }

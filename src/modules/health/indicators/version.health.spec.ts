@@ -53,15 +53,15 @@ describe('VersionHealthIndicator', () => {
 
     it('should return healthy status when version is available', () => {
       // Arrange
-      const expectedUpResult = { status: 'up', version: '0.1.0' };
+      const expectedUpResult = { status: 'up', value: '0.1.0' };
       mockHealthCheck.up.mockReturnValue(expectedUpResult);
 
       // Act
-      const result = indicator.getVersion(key);
+      const result = indicator.getValue(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
-      expect(mockHealthCheck.up).toHaveBeenCalledWith({ version: '0.1.0' });
+      expect(mockHealthCheck.up).toHaveBeenCalledWith({ value: '0.1.0' });
       expect(result).toBe(expectedUpResult);
       expect(mockHealthCheck.down).not.toHaveBeenCalled();
     });
@@ -69,15 +69,15 @@ describe('VersionHealthIndicator', () => {
     it('should return unhealthy status when version is undefined', () => {
       // Arrange
       mockVersion.mockReturnValue(undefined);
-      const expectedDownResult = { status: 'down', error: 'Version not found' };
+      const expectedDownResult = { status: 'down', error: 'Version not found or not valid semver' };
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.getVersion(key);
+      const result = indicator.getValue(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
-      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found' });
+      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found or not valid semver' });
       expect(result).toBe(expectedDownResult);
       expect(mockHealthCheck.up).not.toHaveBeenCalled();
     });
@@ -85,15 +85,15 @@ describe('VersionHealthIndicator', () => {
     it('should return unhealthy status when version is null', () => {
       // Arrange
       mockVersion.mockReturnValue(undefined);
-      const expectedDownResult = { status: 'down', error: 'Version not found' };
+      const expectedDownResult = { status: 'down', error: 'Version not found or not valid semver' };
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.getVersion(key);
+      const result = indicator.getValue(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
-      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found' });
+      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found or not valid semver' });
       expect(result).toBe(expectedDownResult);
       expect(mockHealthCheck.up).not.toHaveBeenCalled();
     });
@@ -101,15 +101,15 @@ describe('VersionHealthIndicator', () => {
     it('should return unhealthy status when version is empty string', () => {
       // Arrange
       mockVersion.mockReturnValue('');
-      const expectedDownResult = { status: 'down', error: 'Version not found' };
+      const expectedDownResult = { status: 'down', error: 'Version not found or not valid semver' };
       mockHealthCheck.down.mockReturnValue(expectedDownResult);
 
       // Act
-      const result = indicator.getVersion(key);
+      const result = indicator.getValue(key);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(key);
-      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found' });
+      expect(mockHealthCheck.down).toHaveBeenCalledWith({ error: 'Version not found or not valid semver' });
       expect(result).toBe(expectedDownResult);
       expect(mockHealthCheck.up).not.toHaveBeenCalled();
     });
@@ -117,10 +117,10 @@ describe('VersionHealthIndicator', () => {
     it('should use the provided key parameter when calling health check', () => {
       // Arrange
       const customKey = 'application-version';
-      mockHealthCheck.up.mockReturnValue({ status: 'up', version: '0.1.0' });
+      mockHealthCheck.up.mockReturnValue({ status: 'up', value: '0.1.0' });
 
       // Act
-      indicator.getVersion(customKey);
+      indicator.getValue(customKey);
 
       // Assert
       expect(healthIndicatorService.check).toHaveBeenCalledWith(customKey);
