@@ -7,6 +7,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { validate } from './config/configuration';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { HealthModule } from './modules/health/health.module';
     }),
     TasksModule,
     HealthModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],

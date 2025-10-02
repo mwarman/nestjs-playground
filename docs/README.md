@@ -6,6 +6,8 @@ Welcome to the documentation for the NestJS Playground project. This directory c
 
 - [API Documentation Guide](./api-documentation-guide.md)
   - How to document and expose APIs
+- [API Security Guide](./api-security-guide.md)
+  - JWT authentication, Sign In flow, and applying JWT Auth Guards
 - [Configuration Guide](./configuration-guide.md)
   - Managing environment variables and app configuration
 - [DevOps Guide](./devops-guide.md)
