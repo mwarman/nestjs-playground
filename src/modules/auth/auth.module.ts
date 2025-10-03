@@ -27,6 +27,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     }),
   ],
   controllers: [AuthController],
+  /** Providing APP_GUARD applies JWT authentication globally */
   providers: [AuthService, JwtAuthGuard, { provide: APP_GUARD, useClass: JwtAuthGuard }],
   exports: [AuthService, JwtAuthGuard],
 })
