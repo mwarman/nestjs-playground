@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { User } from '../users/entities/user.entity';
 
@@ -14,6 +15,11 @@ jest.mock('bcrypt', () => ({
   genSalt: jest.fn(),
 }));
 
+// Mock uuid
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'mocked-uuid-value'),
+}));
+
 const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 describe('AuthService', () => {
@@ -21,6 +27,7 @@ describe('AuthService', () => {
 
   const mockUsersService = {
     findOneByUsername: jest.fn(),
+    create: jest.fn(),
   };
 
   const mockJwtService = {
@@ -76,7 +83,7 @@ describe('AuthService', () => {
       // Arrange
       const expectedToken = 'jwt-token';
       mockUsersService.findOneByUsername.mockResolvedValue(mockUser);
-      mockBcrypt.hash.mockResolvedValue('test-hash');
+      mockBcrypt.hash.mockResolvedValue('test-hash' as never);
       mockJwtService.signAsync.mockResolvedValue(expectedToken);
 
       // Act
@@ -107,7 +114,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when password is invalid', async () => {
       // Arrange
       mockUsersService.findOneByUsername.mockResolvedValue(mockUser);
-      mockBcrypt.hash.mockResolvedValue('wrong-hash');
+      mockBcrypt.hash.mockResolvedValue('wrong-hash' as never);
 
       // Act & Assert
       await expect(service.signIn(signInDto)).rejects.toThrow(UnauthorizedException);
@@ -124,8 +131,8 @@ describe('AuthService', () => {
       const password = 'password123';
       const expectedSalt = 'generated-salt';
       const expectedHash = 'generated-hash';
-      mockBcrypt.genSalt.mockResolvedValue(expectedSalt);
-      mockBcrypt.hash.mockResolvedValue(expectedHash);
+      mockBcrypt.genSalt.mockResolvedValue(expectedSalt as never);
+      mockBcrypt.hash.mockResolvedValue(expectedHash as never);
 
       // Act
       const result = await service.hashPassword(password);
@@ -145,8 +152,8 @@ describe('AuthService', () => {
       const saltRounds = 12;
       const expectedSalt = 'generated-salt';
       const expectedHash = 'generated-hash';
-      mockBcrypt.genSalt.mockResolvedValue(expectedSalt);
-      mockBcrypt.hash.mockResolvedValue(expectedHash);
+      mockBcrypt.genSalt.mockResolvedValue(expectedSalt as never);
+      mockBcrypt.hash.mockResolvedValue(expectedHash as never);
 
       // Act
       const result = await service.hashPassword(password, saltRounds);
@@ -158,6 +165,54 @@ describe('AuthService', () => {
       });
       expect(mockBcrypt.genSalt).toHaveBeenCalledWith(saltRounds);
       expect(mockBcrypt.hash).toHaveBeenCalledWith(password, expectedSalt);
+    });
+  });
+
+  describe('register', () => {
+    it('should register a new user successfully', async () => {
+      // Arrange
+      const registerDto: RegisterDto = {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        email: 'jane.smith@example.com',
+        username: 'janesmith',
+        password: 'password123',
+      };
+
+      const expectedSalt = 'generated-salt';
+      const expectedHash = 'generated-hash';
+      const createdUser: User = {
+        id: 'new-user-id',
+        sub: 'new-user-sub',
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        email: registerDto.email,
+        username: registerDto.username,
+        passwordSalt: expectedSalt,
+        passwordHash: expectedHash,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockBcrypt.genSalt.mockResolvedValue(expectedSalt as never);
+      mockBcrypt.hash.mockResolvedValue(expectedHash as never);
+      mockUsersService.create.mockResolvedValue(createdUser);
+
+      // Act
+      const result = await service.register(registerDto);
+
+      // Assert
+      expect(result).toEqual(createdUser);
+      expect(mockBcrypt.genSalt).toHaveBeenCalledWith(10);
+      expect(mockBcrypt.hash).toHaveBeenCalledWith(registerDto.password, expectedSalt);
+      expect(mockUsersService.create).toHaveBeenCalledWith({
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        email: registerDto.email,
+        username: registerDto.username,
+        passwordSalt: expectedSalt,
+        passwordHash: expectedHash,
+      });
     });
   });
 });

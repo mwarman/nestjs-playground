@@ -78,14 +78,14 @@ export class User {
   /**
    * The salt used to encrypt the password.
    */
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   @Column({ type: 'varchar', length: 255 })
   passwordSalt: string;
 
   /**
    * The hashed version of the password.
    */
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   @Column({ type: 'varchar', length: 255 })
   passwordHash: string;
 

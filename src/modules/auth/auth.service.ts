@@ -2,7 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
+import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResultDto } from './dto/sign-in-result.dto';
 
@@ -74,5 +76,29 @@ export class AuthService {
     const salt = await bcrypt.genSalt(saltRounds);
     const hash = await bcrypt.hash(password, salt);
     return { salt, hash };
+  }
+
+  /**
+   * Register a new user account.
+   * @param registerDto The registration data transfer object.
+   * @returns A Promise that resolves to the created User entity.
+   */
+  async register(registerDto: RegisterDto): Promise<User> {
+    const { firstName, lastName, email, username, password } = registerDto;
+
+    // Create password salt and hash
+    const { salt, hash } = await this.hashPassword(password);
+
+    // Create user via Users service
+    const user = await this.usersService.create({
+      firstName,
+      lastName,
+      email,
+      username,
+      passwordSalt: salt,
+      passwordHash: hash,
+    });
+
+    return user;
   }
 }

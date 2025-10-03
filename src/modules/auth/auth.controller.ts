@@ -1,7 +1,19 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UnauthorizedException,
+  UseInterceptors,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { User } from '../users/entities/user.entity';
 import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResultDto } from './dto/sign-in-result.dto';
 
@@ -9,6 +21,7 @@ import { SignInResultDto } from './dto/sign-in-result.dto';
  * Controller for authentication endpoints.
  */
 @ApiTags('Authentication')
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -33,12 +46,32 @@ export class AuthController {
   })
   @HttpCode(HttpStatus.OK)
   @Post('signin')
-  async signIn(@Body() signInDto: SignInDto): Promise<SignInResultDto> {
+  async signIn(@Body(new ValidationPipe({ transform: true })) signInDto: SignInDto): Promise<SignInResultDto> {
     try {
       return await this.authService.signIn(signInDto);
     } catch {
       // Return generic error message for security
       throw new UnauthorizedException('Invalid credentials');
     }
+  }
+
+  /**
+   * Register a new user account.
+   * @param registerDto The registration data transfer object.
+   * @returns The created user entity.
+   */
+  @ApiOperation({
+    summary: 'Register user',
+    description: 'Create a new user account',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User successfully registered',
+    type: User,
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post('register')
+  async register(@Body(new ValidationPipe({ transform: true })) registerDto: RegisterDto): Promise<User> {
+    return await this.authService.register(registerDto);
   }
 }
