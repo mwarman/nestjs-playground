@@ -1,6 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
+
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 interface JwtPayload {
   sub: string;
@@ -17,7 +20,10 @@ interface RequestWithUser extends Request {
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private reflector: Reflector,
+  ) {}
 
   /**
    * Determines if the request can activate the route handler.
@@ -26,6 +32,16 @@ export class JwtAuthGuard implements CanActivate {
    * @throws UnauthorizedException if the JWT is missing or invalid.
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Check if the route is marked as public with the @Public() decorator
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      // If the route is public, allow access
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractTokenFromHeader(request);
 
@@ -36,6 +52,7 @@ export class JwtAuthGuard implements CanActivate {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       // Add the token payload to the request as 'user' attribute
+      // so that it can be accessed in route handlers
       request.user = payload;
     } catch {
       throw new UnauthorizedException('Invalid access token');

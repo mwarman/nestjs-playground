@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResultDto } from './dto/sign-in-result.dto';
+import { Public } from './decorators/public.decorator';
 
 /**
  * Controller for authentication endpoints.
@@ -44,6 +45,7 @@ export class AuthController {
     status: 401,
     description: 'Invalid credentials',
   })
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('signin')
   async signIn(@Body(new ValidationPipe({ transform: true })) signInDto: SignInDto): Promise<SignInResultDto> {
@@ -69,6 +71,7 @@ export class AuthController {
     description: 'User successfully registered',
     type: User,
   })
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('register')
   async register(@Body(new ValidationPipe({ transform: true })) registerDto: RegisterDto): Promise<User> {
