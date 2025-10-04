@@ -14,6 +14,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -29,9 +30,10 @@ import { GetTaskParamsDto } from './dto/get-task-params.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
-@Controller({ path: 'tasks', version: '1' })
 @ApiTags('Tasks')
+@ApiBearerAuth()
 @UseInterceptors(ClassSerializerInterceptor)
+@Controller({ path: 'tasks', version: '1' })
 export class TasksController {
   private readonly logger = new Logger(TasksController.name);
 

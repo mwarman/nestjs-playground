@@ -6,6 +6,8 @@ Welcome to the documentation for the NestJS Playground project. This directory c
 
 - [API Documentation Guide](./api-documentation-guide.md)
   - How to document and expose APIs
+- [API Security Guide](./api-security-guide.md)
+  - An overview of API security within the application
 - [Configuration Guide](./configuration-guide.md)
   - Managing environment variables and app configuration
 - [DevOps Guide](./devops-guide.md)

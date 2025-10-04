@@ -42,6 +42,7 @@ async function bootstrap() {
       { status: 400, description: 'Bad Request' },
       { status: 500, description: 'Internal Server Error' },
     )
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, documentBuilder);
   SwaggerModule.setup('apidoc', app, document);

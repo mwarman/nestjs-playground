@@ -112,6 +112,10 @@ project-root/
   - Use feature branches for new work.
   - Follow conventional commit messages (e.g., `feat(auth): add JWT strategy`).
 
+- **Organize Imports:**
+  - Group imports by external libraries, internal modules, and styles.
+  - Use absolute imports where possible (configure `tsconfig.json` accordingly).
+
 ---
 
 ## Unit Testing Guidelines
