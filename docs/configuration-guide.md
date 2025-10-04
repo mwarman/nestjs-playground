@@ -19,19 +19,21 @@ This document explains how to configure the application. Proper configuration en
 
 The following environment variables are available for configuration:
 
-| Name                       | Description                                                                                                                                                     | Default Value |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| APP_PORT                   | The port on which the application will run.                                                                                                                     | 3001          |
-| LOGGING_LEVEL              | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal                                                                  | log           |
-| CORS_ALLOWED_ORIGIN        | CORS allowed origins. Use "\*" to allow all origins, or comma-separated list for specific origins (e.g., "https://app.com,http://localhost:3000")               | \*            |
-| DB_HOST                    | PostgreSQL database host                                                                                                                                        | localhost     |
-| DB_PORT                    | PostgreSQL database port                                                                                                                                        | 5432          |
-| DB_USER                    | PostgreSQL database username                                                                                                                                    | nestuser      |
-| DB_PASS                    | PostgreSQL database password                                                                                                                                    | nestpassword  |
-| DB_DATABASE                | PostgreSQL database name                                                                                                                                        | nestdb        |
-| DB_SSL                     | Enable SSL for PostgreSQL connection. Allowed: true, false, "true", "false", 1, 0. Useful for cloud DBs or production.                                          | true          |
-| DB_MIGRATIONS_RUN          | Automatically run migrations at startup.                                                                                                                        | true          |
-| SCHEDULE_TASK_CLEANUP_CRON | **Optional.** Cron expression for scheduled task cleanup. Format: second minute hour day month weekday. If not provided, the cleanup job will not be scheduled. | _Not set_     |
+| Name                       | Description                                                                                                                                                     | Default Value   |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| APP_PORT                   | The port on which the application will run.                                                                                                                     | 3001            |
+| LOGGING_LEVEL              | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal                                                                  | log             |
+| CORS_ALLOWED_ORIGIN        | CORS allowed origins. Use "\*" to allow all origins, or comma-separated list for specific origins (e.g., "https://app.com,http://localhost:3000")               | \*              |
+| DB_HOST                    | PostgreSQL database host                                                                                                                                        | localhost       |
+| DB_PORT                    | PostgreSQL database port                                                                                                                                        | 5432            |
+| DB_USER                    | PostgreSQL database username                                                                                                                                    | nestuser        |
+| DB_PASS                    | PostgreSQL database password                                                                                                                                    | nestpassword    |
+| DB_DATABASE                | PostgreSQL database name                                                                                                                                        | nestdb          |
+| DB_SSL                     | Enable SSL for PostgreSQL connection. Allowed: true, false, "true", "false", 1, 0. Useful for cloud DBs or production.                                          | true            |
+| DB_MIGRATIONS_RUN          | Automatically run migrations at startup.                                                                                                                        | true            |
+| SCHEDULE_TASK_CLEANUP_CRON | **Optional.** Cron expression for scheduled task cleanup. Format: second minute hour day month weekday. If not provided, the cleanup job will not be scheduled. | _Not set_       |
+| JWT_SECRET                 | Secret key used to sign JWT tokens for authentication. Store this value in a secure location.                                                                   | your-secret-key |
+| JWT_EXPIRES_IN             | JWT token expiration time (e.g., "1h", "30m").                                                                                                                  | 1h              |
 
 ## Environment Variable Precedence in NestJS
 
@@ -136,6 +138,10 @@ DB_MIGRATIONS_RUN=true
 # Format: second minute hour day month weekday
 # To disable scheduled task cleanup, comment out or remove this variable
 SCHEDULE_TASK_CLEANUP_CRON=0 * * * * *
+
+# JWT Authentication Settings
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=1h
 ```
 
 ## Tips for New Engineers
