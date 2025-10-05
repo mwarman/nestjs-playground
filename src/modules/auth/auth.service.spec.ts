@@ -73,6 +73,52 @@ describe('AuthService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('verifyCredentials', () => {
+    const signInDto: SignInDto = {
+      username: 'johndoe',
+      password: 'password123',
+    };
+
+    it('should return user when credentials are valid', async () => {
+      // Arrange
+      mockUsersService.findOneByUsername.mockResolvedValue(mockUser);
+      mockBcrypt.hash.mockResolvedValue('test-hash' as never);
+
+      // Act
+      const result = await service.verifyCredentials(signInDto);
+
+      // Assert
+      expect(result).toEqual(mockUser);
+      expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith('johndoe');
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('password123', 'test-salt');
+    });
+
+    it('should throw UnauthorizedException when user not found', async () => {
+      // Arrange
+      mockUsersService.findOneByUsername.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.verifyCredentials(signInDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.verifyCredentials(signInDto)).rejects.toThrow('Invalid credentials');
+      expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith('johndoe');
+      expect(mockBcrypt.hash).not.toHaveBeenCalled();
+    });
+
+    it('should return null when password is invalid', async () => {
+      // Arrange
+      mockUsersService.findOneByUsername.mockResolvedValue(mockUser);
+      mockBcrypt.hash.mockResolvedValue('wrong-hash' as never);
+
+      // Act
+      const result = await service.verifyCredentials(signInDto);
+
+      // Assert
+      expect(result).toBeNull();
+      expect(mockUsersService.findOneByUsername).toHaveBeenCalledWith('johndoe');
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('password123', 'test-salt');
+    });
+  });
+
   describe('signIn', () => {
     const signInDto: SignInDto = {
       username: 'johndoe',
