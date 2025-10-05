@@ -102,6 +102,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?@?nestjs|@nestjs/.*|class-transformer|class-validator|uuid|@?nestjs-pino|pino-http|pino)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s",
       "!**/*.module.ts",

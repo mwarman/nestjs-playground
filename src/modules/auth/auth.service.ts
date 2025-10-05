@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResultDto } from './dto/sign-in-result.dto';
+import { JwtPayloadDto } from './dto/jwt-payload.dto';
 
 /**
  * Service for authentication operations.
@@ -19,12 +20,11 @@ export class AuthService {
   ) {}
 
   /**
-   * Sign in a user with username and password.
+   * Verify user credentials.
    * @param signInDto The sign in data transfer object.
-   * @returns A Promise that resolves to SignInResultDto containing the access token.
-   * @throws UnauthorizedException if credentials are invalid.
+   * @returns A Promise that resolves to User if credentials are valid, null otherwise.
    */
-  async signIn(signInDto: SignInDto): Promise<SignInResultDto> {
+  async verifyCredentials(signInDto: SignInDto): Promise<User | null> {
     const { username, password } = signInDto;
 
     // Fetch the user by username
@@ -37,11 +37,28 @@ export class AuthService {
     const isPasswordValid = await this.verifyPassword(password, user.passwordSalt, user.passwordHash);
 
     if (!isPasswordValid) {
+      return null;
+    }
+
+    return user;
+  }
+
+  /**
+   * Sign in a User with username and password.
+   * @param signInDto The sign in data transfer object.
+   * @returns A Promise that resolves to SignInResultDto containing the access token.
+   * @throws UnauthorizedException if credentials are invalid.
+   */
+  async signIn(signInDto: SignInDto): Promise<SignInResultDto> {
+    // Verify user credentials
+    const user = await this.verifyCredentials(signInDto);
+
+    if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Create JWT payload
-    const payload = {
+    const payload: JwtPayloadDto = {
       sub: user.sub,
       username: user.username,
     };

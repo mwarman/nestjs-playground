@@ -4,8 +4,11 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Logger,
   Post,
+  Request,
   UnauthorizedException,
+  UseGuards,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,6 +20,7 @@ import { RegisterDto } from './dto/register.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignInResultDto } from './dto/sign-in-result.dto';
 import { Public } from './decorators/public.decorator';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 /**
  * Controller for authentication endpoints.
@@ -25,6 +29,8 @@ import { Public } from './decorators/public.decorator';
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   /**
@@ -46,6 +52,7 @@ export class AuthController {
     description: 'Invalid credentials',
   })
   @Public()
+  @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('signin')
   async signIn(@Body(new ValidationPipe({ transform: true })) signInDto: SignInDto): Promise<SignInResultDto> {
@@ -75,6 +82,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('register')
   async register(@Body(new ValidationPipe({ transform: true })) registerDto: RegisterDto): Promise<User> {
+    this.logger.log(`> register: ${registerDto.username}`);
+    this.logger.log(`< register: ${registerDto.username}`);
     return await this.authService.register(registerDto);
   }
 }
