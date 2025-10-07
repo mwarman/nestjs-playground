@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const DEFAULT_APP_PORT = 3001;
 export const DEFAULT_LOGGING_LEVEL = 'log';
 export const DEFAULT_CORS_ALLOWED_ORIGIN = '*';
+export const DEFAULT_JWT_SECRET = 'your-secret-key';
+export const DEFAULT_JWT_EXPIRES_IN = '1h';
 export const DEFAULT_DB_HOST = 'localhost';
 export const DEFAULT_DB_PORT = 5432;
 export const DEFAULT_DB_USER = 'nestuser';
@@ -23,6 +25,8 @@ const configSchema = z.object({
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0);
     }),
+  JWT_SECRET: z.string().min(1).default(DEFAULT_JWT_SECRET),
+  JWT_EXPIRES_IN: z.string().min(1).default(DEFAULT_JWT_EXPIRES_IN),
   DB_HOST: z.string().default(DEFAULT_DB_HOST),
   DB_PORT: z.coerce.number().min(1).max(65535).default(DEFAULT_DB_PORT),
   DB_USER: z.string().default(DEFAULT_DB_USER),
