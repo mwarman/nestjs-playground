@@ -143,11 +143,32 @@ DB_DATABASE: nestjs_playground
 // Compute environment variables
 CDK_APP_PORT = 3000;
 CDK_APP_LOGGING_LEVEL = debug;
+CDK_APP_JWT_EXPIRES_IN = 1h; // JWT token expiration time
 CDK_TASK_MEMORY_MB = 512; // Task memory in MB (configurable)
 CDK_TASK_CPU_UNITS = 256; // Task CPU units (configurable)
 CDK_SERVICE_DESIRED_COUNT = 0; // Initial desired count (configurable)
 CDK_SERVICE_MIN_CAPACITY = 0; // Auto scaling minimum (configurable)
 CDK_SERVICE_MAX_CAPACITY = 4; // Auto scaling maximum (configurable)
+```
+
+**Environment Variables Injected into Compute Containers**:
+
+```typescript
+// Application environment variables
+NODE_ENV: 'production';
+APP_PORT: '3000';
+LOGGING_LEVEL: 'debug'; // or configured level
+LOGGING_FORMAT: 'json';
+CORS_ALLOWED_ORIGIN: '*'; // or configured origins
+JWT_EXPIRES_IN: '1h'; // JWT token expiration from CDK_APP_JWT_EXPIRES_IN
+
+// Secrets from AWS services
+DB_HOST: 'cluster endpoint'; // from Aurora Secrets Manager
+DB_PORT: '5432'; // from Aurora Secrets Manager
+DB_USER: 'postgres'; // from Aurora Secrets Manager
+DB_PASS: 'auto-generated'; // from Aurora Secrets Manager
+DB_DATABASE: 'nestjs_playground'; // from Aurora Secrets Manager
+JWT_SECRET: 'secure-jwt-secret'; // from Parameter Store: /nestjs-playground/jwt-secret
 ```
 
 ### Scheduled Task Stack (`scheduled-task.stack.ts`)
@@ -206,7 +227,16 @@ CDK_SCHEDULER_TASK_CPU_UNITS = 256; // Task CPU units (default: 256)
    - Route 53 hosted zone
    - SSL certificate in ACM
 
-3. **Local Environment**:
+3. **Required Secrets**:
+   - JWT secret parameter must be created manually in AWS Systems Manager Parameter Store:
+     ```bash
+     aws ssm put-parameter \
+       --name "/nestjs-playground/jwt-secret" \
+       --type "SecureString" \
+       --value "your-secure-jwt-secret-key"
+     ```
+
+4. **Local Environment**:
    - Node.js (version in `.nvmrc`)
    - AWS CDK CLI installed globally
 
@@ -355,6 +385,7 @@ All configuration uses environment variables prefixed with `CDK_`:
 | `CDK_APP_PORT`                | Application port     | `3000`              | `3000`                                  |
 | `CDK_APP_LOGGING_LEVEL`       | Log level            | `info`              | `debug`                                 |
 | `CDK_APP_CORS_ALLOWED_ORIGIN` | CORS allowed origins | `*`                 | `https://app.com,http://localhost:3000` |
+| `CDK_APP_JWT_EXPIRES_IN`      | JWT token expiration | `1h`                | `2h`, `30m`, `7d`                       |
 
 #### Database Variables
 
@@ -431,8 +462,9 @@ CDK_ENVIRONMENT=prd npm run deploy
 
 1. **HTTPS Only**: SSL termination at load balancer with HTTP→HTTPS redirect
 2. **Container Security**: Regular image scanning and minimal base images
-3. **Secrets Management**: Database credentials in AWS Secrets Manager
-4. **IAM Roles**: Least privilege access for ECS tasks
+3. **Secrets Management**: Database credentials in AWS Secrets Manager, JWT secrets in Systems Manager Parameter Store
+4. **JWT Authentication**: JWT secret stored securely in `/nestjs-playground/jwt-secret` Parameter Store parameter
+5. **IAM Roles**: Least privilege access for ECS tasks and Parameter Store access
 
 ### Data Security
 
