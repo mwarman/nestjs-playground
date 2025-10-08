@@ -57,11 +57,9 @@ export class ComputeStack extends cdk.Stack {
     props.databaseSecret.grantRead(taskDefinition.taskRole);
 
     // Create reference to JWT secret parameter
-    const jwtSecretParameter = ssm.StringParameter.fromStringParameterName(
-      this,
-      'JWTSecretParameter',
-      `/nestjs-playground/jwt-secret`,
-    );
+    const jwtSecretParameter = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'JWTSecretParameter', {
+      parameterName: `/nestjs-playground/jwt-secret`,
+    });
 
     // Grant task access to JWT secret parameter
     jwtSecretParameter.grantRead(taskDefinition.taskRole);
