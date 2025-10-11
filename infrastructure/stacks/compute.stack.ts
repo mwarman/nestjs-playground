@@ -196,7 +196,7 @@ export class ComputeStack extends cdk.Stack {
 
     // Scale based on CPU utilization
     scalableTarget.scaleOnCpuUtilization('CpuScaling', {
-      targetUtilizationPercent: 70,
+      targetUtilizationPercent: 50,
       scaleInCooldown: cdk.Duration.minutes(5),
       scaleOutCooldown: cdk.Duration.minutes(1),
     });
