@@ -128,7 +128,7 @@ DB_DATABASE: nestjs_playground
 - **ECS Cluster**: Managed ECS cluster with container insights
 - **Task Definition**: Fargate task with configurable CPU and memory
 - **Service**: Maintains desired instance count with rolling deployments
-- **Auto Scaling**: CPU-based scaling (70% threshold, configurable min/max instances)
+- **Auto Scaling**: CPU-based scaling (50% threshold, configurable min/max instances)
 - **Application Load Balancer**: Internet-facing with HTTPS termination
 - **Target Group**: Health checks on `/v1/health` endpoint
 - **Listeners**:

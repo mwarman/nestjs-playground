@@ -51,7 +51,7 @@ The infrastructure is organized into five logical stacks:
 
 - **ECS Fargate**: Serverless container hosting
 - **Application Load Balancer**: HTTP/HTTPS load balancing with health checks
-- **Auto Scaling**: CPU-based scaling (1-4 instances, 70% CPU threshold)
+- **Auto Scaling**: CPU-based scaling (1-4 instances, 50% CPU threshold)
 - **Route 53**: DNS alias record pointing to the load balancer
 
 ### 5. Scheduled Task Stack (`scheduled-task.stack.ts`)
