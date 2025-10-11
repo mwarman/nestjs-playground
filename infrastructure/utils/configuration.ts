@@ -11,6 +11,7 @@ const configurationSchema = z
     CDK_APP_PORT: z.coerce.number().int().positive().default(3000),
     CDK_APP_LOGGING_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
     CDK_APP_CORS_ALLOWED_ORIGIN: z.string().default('*'),
+    CDK_APP_JWT_EXPIRES_IN: z.string().min(1).default('1h'),
     CDK_ENVIRONMENT: z.string().min(1).default('dev'),
 
     // AWS configuration

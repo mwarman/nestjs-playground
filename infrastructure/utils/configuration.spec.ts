@@ -40,6 +40,7 @@ describe('Configuration Utility', () => {
         expect(config.CDK_APP_PORT).toBe(3000);
         expect(config.CDK_APP_LOGGING_LEVEL).toBe('info');
         expect(config.CDK_APP_CORS_ALLOWED_ORIGIN).toBe('*');
+        expect(config.CDK_APP_JWT_EXPIRES_IN).toBe('1h');
         expect(config.CDK_ENVIRONMENT).toBe('dev');
         expect(config.CDK_TASK_MEMORY_MB).toBe(512);
         expect(config.CDK_TASK_CPU_UNITS).toBe(256);
@@ -60,6 +61,7 @@ describe('Configuration Utility', () => {
         process.env.CDK_APP_PORT = '8080';
         process.env.CDK_APP_LOGGING_LEVEL = 'debug';
         process.env.CDK_APP_CORS_ALLOWED_ORIGIN = 'https://custom.com';
+        process.env.CDK_APP_JWT_EXPIRES_IN = '2h';
         process.env.CDK_ENVIRONMENT = 'production';
         process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
         process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
@@ -74,6 +76,7 @@ describe('Configuration Utility', () => {
         expect(config.CDK_APP_PORT).toBe(8080);
         expect(config.CDK_APP_LOGGING_LEVEL).toBe('debug');
         expect(config.CDK_APP_CORS_ALLOWED_ORIGIN).toBe('https://custom.com');
+        expect(config.CDK_APP_JWT_EXPIRES_IN).toBe('2h');
         expect(config.CDK_ENVIRONMENT).toBe('production');
       });
 

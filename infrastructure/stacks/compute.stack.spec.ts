@@ -5,6 +5,7 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as certificatemanager from 'aws-cdk-lib/aws-certificatemanager';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as logs from 'aws-cdk-lib/aws-logs';
@@ -35,6 +36,7 @@ describe('ComputeStack', () => {
     appPort: 3000,
     loggingLevel: 'info',
     corsAllowedOrigin: 'https://example.com',
+    jwtExpiresIn: '1h',
     taskMemoryMb: 512,
     taskCpuUnits: 256,
     serviceDesiredCount: 2,
@@ -58,6 +60,12 @@ describe('ComputeStack', () => {
     mockVpc = new ec2.Vpc(stack, 'TestVpc', { maxAzs: 2 });
     mockRepository = new ecr.Repository(stack, 'TestRepository');
     mockSecret = new secretsmanager.Secret(stack, 'TestSecret');
+
+    // Create JWT secret parameter for testing
+    const jwtSecretParameter = new ssm.StringParameter(stack, 'JWTSecretParameter', {
+      parameterName: '/nestjs-playground/jwt-secret',
+      stringValue: 'test-jwt-secret-value',
+    });
 
     mockHostedZone = route53.HostedZone.fromHostedZoneAttributes(stack, 'TestHostedZone', {
       hostedZoneId: 'Z1234567890ABC',
@@ -102,6 +110,7 @@ describe('ComputeStack', () => {
         LOGGING_LEVEL: defaultProps.loggingLevel,
         LOGGING_FORMAT: 'json',
         CORS_ALLOWED_ORIGIN: defaultProps.corsAllowedOrigin,
+        JWT_EXPIRES_IN: defaultProps.jwtExpiresIn,
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(mockSecret, 'host'),
@@ -109,6 +118,7 @@ describe('ComputeStack', () => {
         DB_USER: ecs.Secret.fromSecretsManager(mockSecret, 'username'),
         DB_PASS: ecs.Secret.fromSecretsManager(mockSecret, 'password'),
         DB_DATABASE: ecs.Secret.fromSecretsManager(mockSecret, 'dbname'),
+        JWT_SECRET: ecs.Secret.fromSsmParameter(jwtSecretParameter),
       },
       portMappings: [
         {
@@ -299,6 +309,7 @@ describe('ComputeStack', () => {
               { Name: 'LOGGING_LEVEL', Value: 'info' },
               { Name: 'LOGGING_FORMAT', Value: 'json' },
               { Name: 'CORS_ALLOWED_ORIGIN', Value: 'https://example.com' },
+              { Name: 'JWT_EXPIRES_IN', Value: '1h' },
             ],
             Secrets: [
               { Name: 'DB_HOST' },
@@ -306,6 +317,7 @@ describe('ComputeStack', () => {
               { Name: 'DB_USER' },
               { Name: 'DB_PASS' },
               { Name: 'DB_DATABASE' },
+              { Name: 'JWT_SECRET' },
             ],
             PortMappings: [
               {

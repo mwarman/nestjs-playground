@@ -8,6 +8,7 @@ import * as route53targets from 'aws-cdk-lib/aws-route53-targets';
 import * as certificatemanager from 'aws-cdk-lib/aws-certificatemanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 
 export interface ComputeStackProps extends cdk.StackProps {
@@ -21,6 +22,7 @@ export interface ComputeStackProps extends cdk.StackProps {
   appPort: number;
   loggingLevel: string;
   corsAllowedOrigin: string;
+  jwtExpiresIn: string;
   taskMemoryMb: number;
   taskCpuUnits: number;
   serviceDesiredCount: number;
@@ -54,6 +56,14 @@ export class ComputeStack extends cdk.Stack {
     // Grant task access to database secret
     props.databaseSecret.grantRead(taskDefinition.taskRole);
 
+    // Create reference to JWT secret parameter
+    const jwtSecretParameter = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'JWTSecretParameter', {
+      parameterName: `/nestjs-playground/jwt-secret`,
+    });
+
+    // Grant task access to JWT secret parameter
+    jwtSecretParameter.grantRead(taskDefinition.taskRole);
+
     // Create log group
     const logGroup = new logs.LogGroup(this, 'ApplicationLogGroup', {
       logGroupName: `/ecs/${props.appName}-${props.environment}`,
@@ -76,6 +86,7 @@ export class ComputeStack extends cdk.Stack {
         LOGGING_LEVEL: props.loggingLevel,
         LOGGING_FORMAT: 'json', // Enable JSON logging in the application
         CORS_ALLOWED_ORIGIN: props.corsAllowedOrigin,
+        JWT_EXPIRES_IN: props.jwtExpiresIn,
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(props.databaseSecret, 'host'),
@@ -83,6 +94,7 @@ export class ComputeStack extends cdk.Stack {
         DB_USER: ecs.Secret.fromSecretsManager(props.databaseSecret, 'username'),
         DB_PASS: ecs.Secret.fromSecretsManager(props.databaseSecret, 'password'),
         DB_DATABASE: ecs.Secret.fromSecretsManager(props.databaseSecret, 'dbname'),
+        JWT_SECRET: ecs.Secret.fromSsmParameter(jwtSecretParameter),
       },
     });
 
@@ -184,7 +196,7 @@ export class ComputeStack extends cdk.Stack {
 
     // Scale based on CPU utilization
     scalableTarget.scaleOnCpuUtilization('CpuScaling', {
-      targetUtilizationPercent: 70,
+      targetUtilizationPercent: 50,
       scaleInCooldown: cdk.Duration.minutes(5),
       scaleOutCooldown: cdk.Duration.minutes(1),
     });

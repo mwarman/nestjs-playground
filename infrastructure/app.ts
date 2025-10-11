@@ -64,6 +64,7 @@ const computeStack = new ComputeStack(app, `${config.CDK_APP_NAME}-compute-${con
   appPort: config.CDK_APP_PORT,
   loggingLevel: config.CDK_APP_LOGGING_LEVEL,
   corsAllowedOrigin: config.CDK_APP_CORS_ALLOWED_ORIGIN,
+  jwtExpiresIn: config.CDK_APP_JWT_EXPIRES_IN,
   taskMemoryMb: config.CDK_TASK_MEMORY_MB,
   taskCpuUnits: config.CDK_TASK_CPU_UNITS,
   serviceDesiredCount: config.CDK_SERVICE_DESIRED_COUNT,

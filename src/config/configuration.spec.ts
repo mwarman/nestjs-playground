@@ -4,6 +4,8 @@ import {
   DEFAULT_APP_PORT,
   DEFAULT_LOGGING_LEVEL,
   DEFAULT_CORS_ALLOWED_ORIGIN,
+  DEFAULT_JWT_SECRET,
+  DEFAULT_JWT_EXPIRES_IN,
   DEFAULT_DB_HOST,
   DEFAULT_DB_PORT,
   DEFAULT_DB_USER,
@@ -29,6 +31,8 @@ describe('Configuration', () => {
         APP_PORT: DEFAULT_APP_PORT,
         LOGGING_LEVEL: DEFAULT_LOGGING_LEVEL,
         CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
+        JWT_SECRET: DEFAULT_JWT_SECRET,
+        JWT_EXPIRES_IN: DEFAULT_JWT_EXPIRES_IN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -55,6 +59,8 @@ describe('Configuration', () => {
         APP_PORT: 8080,
         LOGGING_LEVEL: 'debug',
         CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
+        JWT_SECRET: DEFAULT_JWT_SECRET,
+        JWT_EXPIRES_IN: DEFAULT_JWT_EXPIRES_IN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -81,6 +87,8 @@ describe('Configuration', () => {
         APP_PORT: 5000,
         LOGGING_LEVEL: 'warn',
         CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
+        JWT_SECRET: DEFAULT_JWT_SECRET,
+        JWT_EXPIRES_IN: DEFAULT_JWT_EXPIRES_IN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -225,6 +233,8 @@ describe('Configuration', () => {
         APP_PORT: 3000,
         LOGGING_LEVEL: 'log',
         CORS_ALLOWED_ORIGIN: DEFAULT_CORS_ALLOWED_ORIGIN,
+        JWT_SECRET: DEFAULT_JWT_SECRET,
+        JWT_EXPIRES_IN: DEFAULT_JWT_EXPIRES_IN,
         DB_HOST: DEFAULT_DB_HOST,
         DB_PORT: DEFAULT_DB_PORT,
         DB_USER: DEFAULT_DB_USER,
@@ -276,6 +286,18 @@ describe('Configuration', () => {
       expect(DEFAULT_LOGGING_LEVEL).toBe('log');
       expect(typeof DEFAULT_LOGGING_LEVEL).toBe('string');
     });
+
+    it('should export DEFAULT_JWT_SECRET with correct value', () => {
+      // Arrange & Act & Assert
+      expect(DEFAULT_JWT_SECRET).toBe('your-secret-key');
+      expect(typeof DEFAULT_JWT_SECRET).toBe('string');
+    });
+
+    it('should export DEFAULT_JWT_EXPIRES_IN with correct value', () => {
+      // Arrange & Act & Assert
+      expect(DEFAULT_JWT_EXPIRES_IN).toBe('1h');
+      expect(typeof DEFAULT_JWT_EXPIRES_IN).toBe('string');
+    });
   });
 
   describe('Config Type', () => {
@@ -293,6 +315,76 @@ describe('Configuration', () => {
       expect(typeof result.APP_PORT).toBe('number');
       expect(typeof result.LOGGING_LEVEL).toBe('string');
       expect(['debug', 'log', 'warn', 'error']).toContain(result.LOGGING_LEVEL);
+    });
+
+    describe('JWT Configuration', () => {
+      it('should use default JWT_SECRET when undefined', () => {
+        // Arrange
+        const input = {};
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.JWT_SECRET).toBe(DEFAULT_JWT_SECRET);
+      });
+
+      it('should use provided JWT_SECRET when defined', () => {
+        // Arrange
+        const input = {
+          JWT_SECRET: 'custom-jwt-secret-123',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.JWT_SECRET).toBe('custom-jwt-secret-123');
+      });
+
+      it('should use default JWT_EXPIRES_IN when undefined', () => {
+        // Arrange
+        const input = {};
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.JWT_EXPIRES_IN).toBe(DEFAULT_JWT_EXPIRES_IN);
+      });
+
+      it('should use provided JWT_EXPIRES_IN when defined', () => {
+        // Arrange
+        const input = {
+          JWT_EXPIRES_IN: '2h',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.JWT_EXPIRES_IN).toBe('2h');
+      });
+
+      it('should throw error for empty JWT_SECRET', () => {
+        // Arrange
+        const input = {
+          JWT_SECRET: '',
+        };
+
+        // Act & Assert
+        expect(() => validate(input)).toThrow('Config validation error: JWT_SECRET - Too small');
+      });
+
+      it('should throw error for empty JWT_EXPIRES_IN', () => {
+        // Arrange
+        const input = {
+          JWT_EXPIRES_IN: '',
+        };
+
+        // Act & Assert
+        expect(() => validate(input)).toThrow('Config validation error: JWT_EXPIRES_IN - Too small');
+      });
     });
 
     describe('CORS_ALLOWED_ORIGIN', () => {
