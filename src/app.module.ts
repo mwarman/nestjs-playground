@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
+import { CacheModule } from '@nestjs/cache-manager';
 
 import { validate } from './config/configuration';
 import { TasksModule } from './modules/tasks/tasks.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './modules/users/users.module';
         },
       }),
     }),
+    CacheModule.register({ isGlobal: true, ttl: 5000 }), // Cache for 5 seconds by default
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
