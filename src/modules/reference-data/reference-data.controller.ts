@@ -15,10 +15,8 @@ import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nest
 import { TaskPriority } from './entities/task-priority.entity';
 import { GetTaskPriorityParamsDto } from './dto/get-task-priority-params.dto';
 import { TaskPriorityService } from './task-priority.service';
-import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Reference Data')
-@Public() // Reference data endpoints are public
 @UseInterceptors(ClassSerializerInterceptor, CacheInterceptor)
 @Controller({ path: 'refdata', version: '1' })
 export class ReferenceDataController {
