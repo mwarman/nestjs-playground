@@ -10,6 +10,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    ReferenceDataModule,
   ],
   controllers: [],
   providers: [],
