@@ -3,12 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
+import { CacheModule } from '@nestjs/cache-manager';
 
 import { validate } from './config/configuration';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { UsersModule } from './modules/users/users.module';
         },
       }),
     }),
+    CacheModule.register({ isGlobal: true, ttl: 5000 }), // Cache for 5 seconds by default
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -46,6 +49,7 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    ReferenceDataModule,
   ],
   controllers: [],
   providers: [],
