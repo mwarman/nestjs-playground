@@ -15,40 +15,40 @@ export class TasksService {
     private readonly taskRepository: Repository<Task>,
   ) {}
 
-  async findAll(): Promise<Task[]> {
-    this.logger.log('> findAll');
-    const tasks = await this.taskRepository.find();
-    this.logger.debug(`findAll: returning ${tasks.length} tasks`);
-    this.logger.log('< findAll');
+  async findAll(userId: string): Promise<Task[]> {
+    this.logger.log(`> findAll: userId=${userId}`);
+    const tasks = await this.taskRepository.find({ where: { userId } });
+    this.logger.debug(`findAll: returning ${tasks.length} tasks for user ${userId}`);
+    this.logger.log(`< findAll: userId=${userId}`);
     return tasks;
   }
 
-  async findOne(id: string): Promise<Task> {
-    this.logger.log(`> findOne: ${id}`);
-    const task = await this.taskRepository.findOne({ where: { id } });
-    this.logger.debug(`findOne: ${id} found: ${!!task}`);
+  async findOne(id: string, userId: string): Promise<Task> {
+    this.logger.log(`> findOne: ${id}, userId=${userId}`);
+    const task = await this.taskRepository.findOne({ where: { id, userId } });
+    this.logger.debug(`findOne: ${id} found: ${!!task} for user ${userId}`);
 
     if (!task) {
-      this.logger.warn(`Task with ID ${id} not found`);
+      this.logger.warn(`Task with ID ${id} not found for user ${userId}`);
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
-    this.logger.log(`< findOne: ${id}`);
+    this.logger.log(`< findOne: ${id}, userId=${userId}`);
     return task;
   }
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    this.logger.log('> create');
-    const task = this.taskRepository.create(createTaskDto);
+  async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
+    this.logger.log(`> create: userId=${userId}`);
+    const task = this.taskRepository.create({ ...createTaskDto, userId });
     const savedTask = await this.taskRepository.save(task);
-    this.logger.debug(`create: created task with ID ${savedTask.id}`);
-    this.logger.log('< create');
+    this.logger.debug(`create: created task with ID ${savedTask.id} for user ${userId}`);
+    this.logger.log(`< create: userId=${userId}`);
     return savedTask;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    this.logger.log(`> update: ${id}`);
-    // Verify the task exists before updating
-    await this.findOne(id);
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string): Promise<Task> {
+    this.logger.log(`> update: ${id}, userId=${userId}`);
+    // Verify the task exists and belongs to the user before updating
+    await this.findOne(id, userId);
 
     // Extract the id from the DTO since we don't want to update it
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,29 +61,36 @@ export class TasksService {
     };
 
     // Use repository.update() to ensure @UpdateDateColumn is triggered
-    await this.taskRepository.update(id, taskUpdateData);
+    // Also ensure we only update tasks belonging to the user
+    await this.taskRepository.update({ id, userId }, taskUpdateData);
 
     // Fetch the updated task to return with the new updatedAt timestamp
-    const updatedTask = await this.findOne(id);
-    this.logger.debug(`update: updated task with ID ${updatedTask.id}`);
-    this.logger.log(`< update: ${id}`);
+    const updatedTask = await this.findOne(id, userId);
+    this.logger.debug(`update: updated task with ID ${updatedTask.id} for user ${userId}`);
+    this.logger.log(`< update: ${id}, userId=${userId}`);
     return updatedTask;
   }
 
-  async remove(id: string): Promise<void> {
-    this.logger.log(`> remove: ${id}`);
-    const task = await this.findOne(id);
+  async remove(id: string, userId: string): Promise<void> {
+    this.logger.log(`> remove: ${id}, userId=${userId}`);
+    const task = await this.findOne(id, userId);
     await this.taskRepository.remove(task);
-    this.logger.debug(`remove: removed task with ID ${id}`);
-    this.logger.log(`< remove: ${id}`);
+    this.logger.debug(`remove: removed task with ID ${id} for user ${userId}`);
+    this.logger.log(`< remove: ${id}, userId=${userId}`);
   }
 
-  async removeAll(): Promise<number> {
-    this.logger.log('> removeAll');
-    const result = await this.taskRepository.createQueryBuilder().delete().from(Task).execute();
+  async removeAll(userId?: string): Promise<number> {
+    this.logger.log(`> removeAll: userId=${userId || 'all'}`);
+    let queryBuilder = this.taskRepository.createQueryBuilder().delete().from(Task);
+
+    if (userId) {
+      queryBuilder = queryBuilder.where('userId = :userId', { userId });
+    }
+
+    const result = await queryBuilder.execute();
     const deletedCount = result.affected || 0;
-    this.logger.debug(`removeAll: removed ${deletedCount} tasks`);
-    this.logger.log('< removeAll');
+    this.logger.debug(`removeAll: removed ${deletedCount} tasks ${userId ? `for user ${userId}` : ''}`);
+    this.logger.log(`< removeAll: userId=${userId || 'all'}`);
     return deletedCount;
   }
 }

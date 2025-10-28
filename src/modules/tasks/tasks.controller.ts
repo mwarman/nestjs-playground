@@ -24,6 +24,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { User } from '../auth/decorators/user.decorator';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskParamsDto } from './dto/get-task-params.dto';
@@ -43,9 +44,12 @@ export class TasksController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new task' })
   @ApiCreatedResponse({ description: 'The task has been successfully created', type: Task })
-  async create(@Body(new ValidationPipe({ transform: true })) createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(
+    @Body(new ValidationPipe({ transform: true })) createTaskDto: CreateTaskDto,
+    @User('id') userId: string,
+  ): Promise<Task> {
     this.logger.log('> create');
-    const task = await this.tasksService.create(createTaskDto);
+    const task = await this.tasksService.create(createTaskDto, userId);
     this.logger.log('< create');
     return task;
   }
@@ -53,10 +57,10 @@ export class TasksController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Fetch all tasks' })
-  @ApiResponse({ status: 200, description: 'List of all tasks', type: [Task] })
-  async findAll(): Promise<Task[]> {
+  @ApiResponse({ status: 200, description: 'List of all tasks for the authenticated user', type: [Task] })
+  async findAll(@User('id') userId: string): Promise<Task[]> {
     this.logger.log('> findAll');
-    const tasks = await this.tasksService.findAll();
+    const tasks = await this.tasksService.findAll(userId);
     this.logger.log('< findAll');
     return tasks;
   }
@@ -66,9 +70,12 @@ export class TasksController {
   @ApiOperation({ summary: 'Fetch a specific task by its ID' })
   @ApiOkResponse({ description: 'The task with the specified ID', type: Task })
   @ApiNotFoundResponse({ description: 'Task not found' })
-  async findOne(@Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto): Promise<Task> {
+  async findOne(
+    @Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto,
+    @User('id') userId: string,
+  ): Promise<Task> {
     this.logger.log(`> findOne: ${params.taskId}`);
-    const task = await this.tasksService.findOne(params.taskId);
+    const task = await this.tasksService.findOne(params.taskId, userId);
     this.logger.log(`< findOne: ${params.taskId}`);
     return task;
   }
@@ -81,9 +88,10 @@ export class TasksController {
   async update(
     @Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto,
     @Body(new ValidationPipe({ transform: true })) updateTaskDto: UpdateTaskDto,
+    @User('id') userId: string,
   ): Promise<Task> {
     this.logger.log(`> update: ${params.taskId}`);
-    const task = await this.tasksService.update(params.taskId, updateTaskDto);
+    const task = await this.tasksService.update(params.taskId, updateTaskDto, userId);
     this.logger.log(`< update: ${params.taskId}`);
     return task;
   }
@@ -93,9 +101,12 @@ export class TasksController {
   @ApiOperation({ summary: 'Remove a specific task by its ID' })
   @ApiNoContentResponse({ description: 'The task has been successfully removed' })
   @ApiNotFoundResponse({ description: 'Task not found' })
-  async remove(@Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto): Promise<void> {
+  async remove(
+    @Param(new ValidationPipe({ transform: true })) params: GetTaskParamsDto,
+    @User('id') userId: string,
+  ): Promise<void> {
     this.logger.log(`> remove: ${params.taskId}`);
-    await this.tasksService.remove(params.taskId);
+    await this.tasksService.remove(params.taskId, userId);
     this.logger.log(`< remove: ${params.taskId}`);
   }
 }

@@ -142,6 +142,7 @@ describe('AuthService', () => {
       expect(mockJwtService.signAsync).toHaveBeenCalledWith({
         sub: 'test-sub',
         username: 'johndoe',
+        id: 'test-id',
       });
     });
 
