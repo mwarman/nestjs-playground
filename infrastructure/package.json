@@ -19,7 +19,7 @@
     "bootstrap": "cdk bootstrap"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.220.0",
+    "aws-cdk-lib": "2.221.0",
     "constructs": "10.4.2",
     "dotenv": "17.2.3",
     "zod": "4.1.12"
