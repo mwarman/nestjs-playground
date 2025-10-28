@@ -10,7 +10,7 @@ import { JwtPayloadDto } from '../dto/jwt-payload.dto';
  * @example
  * ```typescript
  * @Get()
- * findAll(@User() user: JwtPayloadDto): Promise<Task[]> {
+ * findAll(@AuthUser() user: JwtPayloadDto): Promise<Task[]> {
  *   return this.tasksService.findAll(user.id);
  * }
  * ```
@@ -18,12 +18,12 @@ import { JwtPayloadDto } from '../dto/jwt-payload.dto';
  * @example Extract specific property
  * ```typescript
  * @Get()
- * findAll(@User('id') userId: string): Promise<Task[]> {
+ * findAll(@AuthUser('id') userId: string): Promise<Task[]> {
  *   return this.tasksService.findAll(userId);
  * }
  * ```
  */
-export const User = createParamDecorator((data: keyof JwtPayloadDto, ctx: ExecutionContext) => {
+export const AuthUser = createParamDecorator((data: keyof JwtPayloadDto, ctx: ExecutionContext) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const request = ctx.switchToHttp().getRequest();
   const user = request.user as JwtPayloadDto;
