@@ -42,6 +42,12 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
         migrationsRun: configService.get('DB_MIGRATIONS_RUN'), // Automatically run migrations on startup
         synchronize: false, // Set to false in production, use migrations instead
         logging: true,
+        extra: {
+          min: 5, // minimum number of clients in the pool
+          max: 10, // maximum number of clients in the pool
+          idleTimeoutMillis: 30000, // close idle clients after 30 seconds
+          connectionTimeoutMillis: 10000, // return an error after 10 seconds if connection could not be established
+        },
       }),
       inject: [ConfigService],
     }),

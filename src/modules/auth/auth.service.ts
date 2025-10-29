@@ -61,6 +61,7 @@ export class AuthService {
     const payload: JwtPayloadDto = {
       sub: user.sub,
       username: user.username,
+      id: user.id,
     };
 
     // Generate access token

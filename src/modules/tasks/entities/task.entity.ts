@@ -1,6 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+
+import { User } from '../../users/entities/user.entity';
 
 /**
  * Represents a task in the system.
@@ -63,6 +73,24 @@ export class Task {
   @ApiProperty({ example: false, description: 'Indicates if the task is complete', default: false })
   @Column({ type: 'boolean', default: false })
   isComplete: boolean;
+
+  /**
+   * The unique identifier of the user who owns this task.
+   * @example "550e8400-e29b-41d4-a716-446655440002"
+   */
+  @ApiProperty({
+    example: '550e8400-e29b-41d4-a716-446655440002',
+    description: 'Unique identifier of the user who owns this task',
+  })
+  @Column({ type: 'uuid' })
+  userId: string;
+
+  /**
+   * The user who owns this task.
+   */
+  @ManyToOne(() => User, { nullable: false })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   /**
    * Timestamp when the task was created.
