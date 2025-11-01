@@ -69,4 +69,20 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsBoolean({ message: 'isComplete must be a boolean' })
   isComplete?: boolean;
+
+  /**
+   * Priority code for the task.
+   * @example "HIGH"
+   */
+  @ApiProperty({
+    example: 'HIGH',
+    description: 'Priority code for the task',
+    maxLength: 32,
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'taskPriorityCode must be a string' })
+  @IsNotEmpty({ message: 'taskPriorityCode cannot be empty when provided' })
+  @MaxLength(32, { message: 'taskPriorityCode must not exceed 32 characters' })
+  taskPriorityCode?: string;
 }

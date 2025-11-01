@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { User } from '../../users/entities/user.entity';
+import { TaskPriority } from '../../reference-data/entities/task-priority.entity';
 
 /**
  * Represents a task in the system.
@@ -91,6 +92,24 @@ export class Task {
   @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  /**
+   * The priority code for this task.
+   * @example "HIGH"
+   */
+  @ApiProperty({
+    example: 'HIGH',
+    description: 'Priority code for the task',
+  })
+  @Column({ type: 'varchar', length: 32 })
+  taskPriorityCode: string;
+
+  /**
+   * The priority for this task.
+   */
+  @ManyToOne(() => TaskPriority, { nullable: false, eager: true })
+  @JoinColumn({ name: 'taskPriorityCode' })
+  taskPriority: TaskPriority;
 
   /**
    * Timestamp when the task was created.
