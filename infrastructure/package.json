@@ -19,15 +19,15 @@
     "bootstrap": "cdk bootstrap"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.221.0",
+    "aws-cdk-lib": "2.221.1",
     "constructs": "10.4.2",
     "dotenv": "17.2.3",
     "zod": "4.1.12"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
-    "@types/node": "24.9.1",
-    "aws-cdk": "2.1031.0",
+    "@types/node": "24.9.2",
+    "aws-cdk": "2.1031.1",
     "jest": "30.2.0",
     "ts-jest": "29.4.5",
     "typescript": "5.9.3"
