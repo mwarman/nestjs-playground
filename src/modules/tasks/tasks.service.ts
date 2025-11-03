@@ -1,10 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
+import { TaskPriorityService } from '../reference-data/task-priority.service';
 
 @Injectable()
 export class TasksService {
@@ -13,6 +14,7 @@ export class TasksService {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
+    private readonly taskPriorityService: TaskPriorityService,
   ) {}
 
   async findAll(userId: string): Promise<Task[]> {
@@ -38,6 +40,15 @@ export class TasksService {
 
   async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
     this.logger.log(`> create: userId=${userId}`);
+
+    // Validate task priority exists
+    try {
+      await this.taskPriorityService.findOne(createTaskDto.taskPriorityCode);
+    } catch {
+      this.logger.warn(`Invalid task priority code: ${createTaskDto.taskPriorityCode}`);
+      throw new BadRequestException(`Invalid task priority code: ${createTaskDto.taskPriorityCode}`);
+    }
+
     const task = this.taskRepository.create({ ...createTaskDto, userId });
     const savedTask = await this.taskRepository.save(task);
     this.logger.debug(`create: created task with ID ${savedTask.id} for user ${userId}`);
@@ -49,6 +60,16 @@ export class TasksService {
     this.logger.log(`> update: ${id}, userId=${userId}`);
     // Verify the task exists and belongs to the user before updating
     await this.findOne(id, userId);
+
+    // Validate task priority exists if provided
+    if (updateTaskDto.taskPriorityCode) {
+      try {
+        await this.taskPriorityService.findOne(updateTaskDto.taskPriorityCode);
+      } catch {
+        this.logger.warn(`Invalid task priority code: ${updateTaskDto.taskPriorityCode}`);
+        throw new BadRequestException(`Invalid task priority code: ${updateTaskDto.taskPriorityCode}`);
+      }
+    }
 
     // Extract the id from the DTO since we don't want to update it
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
