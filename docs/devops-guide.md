@@ -66,7 +66,7 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
 
 ### Deploy to DEV Workflow (`deploy-dev.yml`)
 
-- **Purpose:** Automatically deploys the application to the development environment on AWS, including infrastructure provisioning, application building, and container deployment.
+- **Purpose:** Automatically builds, tags with semver, pushes the Docker image to ECR, and deploys the application to the development environment on AWS, including infrastructure provisioning and container deployment.
 - **Triggers:**
   - Manual: Via GitHub Actions UI with optional force bootstrap parameter
 - **Prerequisites:**
@@ -87,22 +87,84 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
      - Build infrastructure TypeScript code
      - Bootstrap CDK (smart check for existing bootstrap)
      - Synthesize CDK CloudFormation templates
-  3. **Deployment Process:**
+  3. **Image Build & Push:**
      - Deploy ECR stack (container registry)
-     - Build and push Docker image to ECR
-     - Deploy Network stack (VPC, subnets, security groups)
-     - Deploy Database stack (RDS Aurora Serverless)
-     - Deploy Compute stack (ECS Fargate service)
-     - Deploy Scheduled Task stack (ECS Fargate service)
-     - Force ECS service update to deploy latest image
-  4. **Cleanup:**
+     - Generate semver tag from package.json version and build metadata
+     - Build Docker image
+     - Push image with both `latest` and semver tags (e.g., `0.1.0+build.123.abc1234`)
+  4. **Deployment:**
+     - Call reusable release workflow with generated semver tag
+     - Deploy infrastructure and application
+  5. **Cleanup:**
      - Remove sensitive files (`.env`, `cdk.out`)
+- **Semver Tag Format:** `{package.json.version}+build.{run_number}.{short_sha}`
+  - Example: `0.1.0+build.42.abc1234`
 - **Security Features:**
   - Uses OIDC for AWS authentication (no long-lived credentials)
   - Automatic cleanup of sensitive files
   - Proper IAM role assumption with session naming
 - **Timeout:** 30 minutes to prevent runaway deployments
-- **Importance:** Enables rapid deployment of latest changes to development environment for testing and validation. Follows infrastructure-as-code principles with proper dependency management and security practices.
+- **Importance:** Enables rapid deployment of latest changes to development environment for testing and validation. Follows infrastructure-as-code principles with proper dependency management, security practices, and version tracking.
+
+### Release (Reusable) Workflow (`release-reusable.yml`)
+
+- **Purpose:** Reusable workflow for deploying a specific image version to any environment. Centralizes deployment logic.
+- **Triggers:**
+  - Called by other workflows (deploy-dev, release-manual)
+- **Inputs:**
+  - `image_tag` - Container image tag to deploy (e.g., `0.1.0+build.123.abc1234`, `latest`)
+  - `environment` - Target environment (dev, qa, prd)
+  - `aws_region` - AWS region for deployment
+  - `aws_role_arn` - AWS IAM role ARN for the environment
+  - `cdk_env_content` - CDK environment configuration
+- **Main Steps:**
+  1. Checkout repository
+  2. Setup Node.js
+  3. Configure AWS credentials
+  4. Install and build infrastructure
+  5. Synthesize CDK stacks
+  6. Deploy infrastructure stacks (Network, Database, Compute, Scheduled Task)
+     - Passes `appVersion` context to CDK for APP_VERSION environment variable
+  7. Update ECS services to deploy specified image version
+  8. Cleanup sensitive files
+- **Importance:** Provides consistent deployment process across all environments. Ensures proper version tracking through APP_VERSION environment variable.
+
+### Release (Manual) Workflow (`release-manual.yml`)
+
+- **Purpose:** Allows manual deployment of any tagged image to any environment via GitHub Actions UI.
+- **Triggers:**
+  - Manual: Via GitHub Actions UI (workflow_dispatch)
+- **Inputs:**
+  - `image_tag` - Container image tag to deploy (e.g., `0.1.0+build.123.abc1234`, `latest`)
+  - `environment` - Target environment (dev, qa, prd) - dropdown selection
+- **Main Steps:**
+  - Configures AWS credentials based on selected environment
+  - Calls reusable release workflow with specified parameters
+- **Use Cases:**
+  - Deploy a specific version to QA or production
+  - Rollback to a previous version
+  - Deploy a tested build from dev to other environments
+- **Importance:** Enables controlled deployments and rollbacks without rebuilding. Supports progressive deployment strategy.
+
+### Tag ECR Image Workflow (`tag-image.yml`)
+
+- **Purpose:** Manually apply additional tags to existing ECR images without rebuilding.
+- **Triggers:**
+  - Manual: Via GitHub Actions UI (workflow_dispatch)
+- **Inputs:**
+  - `current_tag` - Existing image tag (e.g., `0.1.0+build.123.abc1234`)
+  - `new_tag` - New tag to apply (e.g., `0.1.0`, `v0.1.0`, `stable`)
+  - `environment` - Environment (determines AWS account)
+- **Main Steps:**
+  1. Configure AWS credentials for selected environment
+  2. Get image manifest for current tag
+  3. Apply new tag to the same image
+  4. Verify new tag was created successfully
+- **Use Cases:**
+  - Tag a semver build as a release version (e.g., `0.1.0+build.42.abc1234` → `0.1.0`)
+  - Mark an image as stable or approved (e.g., `0.1.0+build.42.abc1234` → `stable`)
+  - Create semantic version tags for release tracking
+- **Importance:** Enables flexible version management and release processes without rebuilding images.
 
 ---
 

@@ -1,0 +1,116 @@
+name: Tag ECR Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      current_tag:
+        description: 'Current container image tag (e.g., 0.1.0+build.123.abc1234, or latest)'
+        required: true
+        type: string
+      new_tag:
+        description: 'New tag to apply to the image (e.g., 0.1.0, v0.1.0, stable)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment (determines which AWS account to use)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prd
+
+concurrency:
+  group: tag-image-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  tag-image:
+    name: Tag Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      # Step 1: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.environment == 'dev' && vars.AWS_ROLE_ARN_DEV || inputs.environment == 'qa' && vars.AWS_ROLE_ARN_QA || vars.AWS_ROLE_ARN_PRD }}
+          role-session-name: tag-ecr-image-${{ inputs.environment }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Step 2: Tag the ECR image
+      - name: Tag ECR image
+        run: |
+          REPOSITORY_NAME="nestjs-playground"
+
+          echo "🔍 Getting ECR repository details..."
+          ECR_REPOSITORY_URI=$(aws ecr describe-repositories \
+            --repository-names $REPOSITORY_NAME \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'repositories[0].repositoryUri' \
+            --output text)
+
+          echo "Repository URI: $ECR_REPOSITORY_URI"
+          echo "Current tag: ${{ inputs.current_tag }}"
+          echo "New tag: ${{ inputs.new_tag }}"
+
+          # Get the image manifest for the current tag
+          echo "📥 Getting image manifest for current tag..."
+          MANIFEST=$(aws ecr batch-get-image \
+            --repository-name $REPOSITORY_NAME \
+            --image-ids imageTag=${{ inputs.current_tag }} \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'images[0].imageManifest' \
+            --output text)
+
+          if [ -z "$MANIFEST" ] || [ "$MANIFEST" = "None" ]; then
+            echo "❌ Error: Image with tag '${{ inputs.current_tag }}' not found"
+            exit 1
+          fi
+
+          # Apply the new tag to the same image
+          echo "🏷️ Applying new tag to image..."
+          aws ecr put-image \
+            --repository-name $REPOSITORY_NAME \
+            --image-tag ${{ inputs.new_tag }} \
+            --image-manifest "$MANIFEST" \
+            --region ${{ vars.AWS_REGION }}
+
+          echo "✅ Successfully tagged image"
+          echo "  Current tag: ${{ inputs.current_tag }}"
+          echo "  New tag: ${{ inputs.new_tag }}"
+          echo "  Image: $ECR_REPOSITORY_URI:${{ inputs.new_tag }}"
+
+      # Step 3: Verify the new tag
+      - name: Verify new tag
+        run: |
+          REPOSITORY_NAME="nestjs-playground"
+
+          echo "🔍 Verifying new tag exists..."
+          TAG_EXISTS=$(aws ecr describe-images \
+            --repository-name $REPOSITORY_NAME \
+            --image-ids imageTag=${{ inputs.new_tag }} \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'imageDetails[0].imageTags' \
+            --output text)
+
+          if [ -z "$TAG_EXISTS" ]; then
+            echo "❌ Error: New tag was not created successfully"
+            exit 1
+          fi
+
+          echo "✅ Verified: New tag '${{ inputs.new_tag }}' exists in repository"
+
+          # Show image details
+          echo "📋 Image details:"
+          aws ecr describe-images \
+            --repository-name $REPOSITORY_NAME \
+            --image-ids imageTag=${{ inputs.new_tag }} \
+            --region ${{ vars.AWS_REGION }} \
+            --query 'imageDetails[0].[imageTags,imagePushedAt,imageSizeInBytes]' \
+            --output table

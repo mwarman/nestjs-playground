@@ -1,0 +1,35 @@
+name: Release (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Container image tag to deploy (e.g., 0.1.0+build.123.abc1234, or latest)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prd
+
+concurrency:
+  group: release-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release ${{ inputs.image_tag }} to ${{ inputs.environment }}
+    uses: ./.github/workflows/release-reusable.yml
+    with:
+      image_tag: ${{ inputs.image_tag }}
+      environment: ${{ inputs.environment }}
+      aws_region: ${{ vars.AWS_REGION }}
+      aws_role_arn: ${{ inputs.environment == 'dev' && vars.AWS_ROLE_ARN_DEV || inputs.environment == 'qa' && vars.AWS_ROLE_ARN_QA || vars.AWS_ROLE_ARN_PRD }}
+      cdk_env_content: ${{ inputs.environment == 'dev' && vars.CDK_ENV_DEV || inputs.environment == 'qa' && vars.CDK_ENV_QA || vars.CDK_ENV_PRD }}
+    permissions:
+      contents: read
+      id-token: write

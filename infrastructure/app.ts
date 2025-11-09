@@ -17,6 +17,9 @@ const tags = getCommonTags(config);
 // Create CDK app
 const app = new cdk.App();
 
+// Get appVersion from CDK context (passed via --context flag)
+const appVersion = app.node.tryGetContext('appVersion') as string | undefined;
+
 // Network Stack
 const networkStack = new NetworkStack(app, `${config.CDK_APP_NAME}-network-${config.CDK_ENVIRONMENT}`, {
   description: 'Network stack for NestJS Playground',
@@ -71,6 +74,7 @@ const computeStack = new ComputeStack(app, `${config.CDK_APP_NAME}-compute-${con
   serviceMinCapacity: config.CDK_SERVICE_MIN_CAPACITY,
   serviceMaxCapacity: config.CDK_SERVICE_MAX_CAPACITY,
   environment: config.CDK_ENVIRONMENT,
+  appVersion,
 });
 
 // Scheduled Task Stack (always created but with 0 desired count when hasScheduledTasks is false)
@@ -91,6 +95,7 @@ const scheduledTaskStack = new ScheduledTaskStack(
     scheduleTaskCleanupCron: config.CDK_SCHEDULE_TASK_CLEANUP_CRON,
     hasScheduledTasks: config.hasScheduledTasks,
     environment: config.CDK_ENVIRONMENT,
+    appVersion,
   },
 );
 

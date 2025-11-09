@@ -14,14 +14,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy
+  build-and-push:
+    name: Build and Push Image
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     permissions:
       contents: read
       id-token: write
+
+    outputs:
+      image_tag: ${{ steps.semver.outputs.version }}
 
     steps:
       # Step 1: Checkout repository
@@ -103,7 +106,28 @@ jobs:
           npx cdk deploy nestjs-playground-ecr-dev --require-approval never
           echo "✅ ECR stack deployed successfully"
 
-      # Step 13: Build the app Docker image and publish it to ECR
+      # Step 13: Generate semver tag
+      - name: Generate semver tag
+        id: semver
+        run: |
+          # Get version from package.json
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          # Generate build metadata from GitHub Actions context
+          BUILD_NUMBER="${{ github.run_number }}"
+          BUILD_SHA="${{ github.sha }}"
+          SHORT_SHA="${BUILD_SHA:0:7}"
+
+          # Create semver with build metadata
+          SEMVER="${PKG_VERSION}+build.${BUILD_NUMBER}.${SHORT_SHA}"
+
+          echo "Package version: ${PKG_VERSION}"
+          echo "Build number: ${BUILD_NUMBER}"
+          echo "Short SHA: ${SHORT_SHA}"
+          echo "Generated semver: ${SEMVER}"
+          echo "version=${SEMVER}" >> $GITHUB_OUTPUT
+
+      # Step 14: Build the app Docker image and publish it to ECR
       - name: Build and push Docker image to ECR
         run: |
           # Get ECR repository URI
@@ -113,92 +137,23 @@ jobs:
           # Login to ECR
           aws ecr get-login-password --region ${{ vars.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
 
-          # Build and tag the image
-          IMAGE_TAG=latest
+          # Build and tag the image with both latest and semver tags
+          SEMVER_TAG="${{ steps.semver.outputs.version }}"
           echo "🔨 Building Docker image..."
-          docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
+          docker build -t $ECR_REPOSITORY_URI:latest -t $ECR_REPOSITORY_URI:$SEMVER_TAG .
 
-          # Push the image
-          echo "📤 Pushing Docker image to ECR..."
-          docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
-          echo "✅ Docker image pushed successfully: $ECR_REPOSITORY_URI:$IMAGE_TAG"
+          # Push both tags
+          echo "📤 Pushing Docker image with tag: latest"
+          docker push $ECR_REPOSITORY_URI:latest
 
-      # Step 14: Deploy the Network, Database, and Application CDK stacks
-      - name: Deploy Network stack
-        working-directory: ./infrastructure
-        run: |
-          echo "🚀 Deploying Network stack..."
-          npx cdk deploy nestjs-playground-network-dev --require-approval never
-          echo "✅ Network stack deployed successfully"
+          echo "📤 Pushing Docker image with tag: $SEMVER_TAG"
+          docker push $ECR_REPOSITORY_URI:$SEMVER_TAG
 
-      - name: Deploy Database stack
-        working-directory: ./infrastructure
-        run: |
-          echo "🚀 Deploying Database stack..."
-          npx cdk deploy nestjs-playground-database-dev --require-approval never
-          echo "✅ Database stack deployed successfully"
+          echo "✅ Docker images pushed successfully"
+          echo "  - $ECR_REPOSITORY_URI:latest"
+          echo "  - $ECR_REPOSITORY_URI:$SEMVER_TAG"
 
-      - name: Deploy Compute stack
-        working-directory: ./infrastructure
-        run: |
-          echo "🚀 Deploying Compute stack..."
-          npx cdk deploy nestjs-playground-compute-dev --require-approval never
-          echo "✅ Compute stack deployed successfully"
-
-      - name: Deploy Scheduled Task stack
-        working-directory: ./infrastructure
-        run: |
-          echo "🚀 Deploying Scheduled Task stack..."
-          npx cdk deploy nestjs-playground-scheduled-task-dev --require-approval never
-          echo "✅ Scheduled Task stack deployed successfully"
-
-      # Step 15: Trigger a deployment of the latest Docker image in AWS ECS
-      - name: Update ECS API service with latest image
-        run: |
-          # Get ECS cluster and service names
-          CLUSTER_NAME="nestjs-playground-dev"
-          SERVICE_NAME="nestjs-playground-dev"
-
-          echo "🔄 Forcing ECS service update to deploy latest image..."
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $SERVICE_NAME \
-            --force-new-deployment \
-            --region ${{ vars.AWS_REGION }}
-
-          echo "✅ ECS service update triggered successfully"
-          echo "⏳ ECS will now pull and deploy the latest Docker image"
-
-      - name: Update ECS Scheduled Task service with latest image
-        run: |
-          # Get ECS cluster and service names
-          CLUSTER_NAME="nestjs-playground-dev"
-          SERVICE_NAME="nestjs-playground-scheduler-dev"
-
-          echo "� Checking if scheduled task service exists..."
-          if aws ecs describe-services \
-            --cluster $CLUSTER_NAME \
-            --services $SERVICE_NAME \
-            --region ${{ vars.AWS_REGION }} \
-            --query 'services[?status==`ACTIVE`].serviceName' \
-            --output text | grep -q "$SERVICE_NAME"; then
-            
-            echo "✅ Scheduled task service found, proceeding with deployment..."
-            echo "�🔄 Forcing ECS service update to deploy latest image..."
-            aws ecs update-service \
-              --cluster $CLUSTER_NAME \
-              --service $SERVICE_NAME \
-              --force-new-deployment \
-              --region ${{ vars.AWS_REGION }}
-
-            echo "✅ ECS service update triggered successfully"
-            echo "⏳ ECS will now pull and deploy the latest Docker image"
-          else
-            echo "⚠️ Scheduled task service not found or not active, skipping deployment..."
-            echo "💡 This is normal if the scheduled task stack was not deployed"
-          fi
-
-      # Step 16: Clean up sensitive infrastructure files
+      # Step 15: Clean up sensitive infrastructure files
       - name: Clean up sensitive files
         if: always()
         working-directory: ./infrastructure
@@ -207,3 +162,17 @@ jobs:
           rm -f .env
           rm -rf cdk.out
           echo "✅ Sensitive files cleaned up"
+
+  deploy:
+    name: Deploy to DEV
+    needs: build-and-push
+    uses: ./.github/workflows/release-reusable.yml
+    with:
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+      environment: dev
+      aws_region: ${{ vars.AWS_REGION }}
+      aws_role_arn: ${{ vars.AWS_ROLE_ARN_DEV }}
+      cdk_env_content: ${{ vars.CDK_ENV_DEV }}
+    permissions:
+      contents: read
+      id-token: write

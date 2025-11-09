@@ -12,6 +12,7 @@ export const DEFAULT_DB_PASS = 'nestpassword';
 export const DEFAULT_DB_DATABASE = 'nestdb';
 
 const configSchema = z.object({
+  APP_VERSION: z.string().optional(),
   APP_PORT: z.coerce.number().min(1).max(65535).default(DEFAULT_APP_PORT),
   LOGGING_LEVEL: z.enum(['verbose', 'debug', 'log', 'warn', 'error', 'fatal']).default(DEFAULT_LOGGING_LEVEL),
   CORS_ALLOWED_ORIGIN: z

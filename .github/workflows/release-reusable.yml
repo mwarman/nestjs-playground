@@ -1,0 +1,156 @@
+name: Release (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        description: 'Container image tag to deploy'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy (dev, qa, prd)'
+        required: true
+        type: string
+      aws_region:
+        description: 'AWS region for deployment'
+        required: true
+        type: string
+      aws_role_arn:
+        description: 'AWS IAM role ARN for deployment'
+        required: true
+        type: string
+      cdk_env_content:
+        description: 'CDK environment configuration content'
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Release to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Setup Node.js using .nvmrc
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      # Step 3: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws_role_arn }}
+          role-session-name: release-nestjs-playground-${{ inputs.environment }}
+          aws-region: ${{ inputs.aws_region }}
+
+      # Step 4: Install infrastructure dependencies
+      - name: Install infrastructure dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+
+      # Step 5: Create infrastructure .env file
+      - name: Create infrastructure .env file
+        working-directory: ./infrastructure
+        run: |
+          echo "${{ inputs.cdk_env_content }}" > .env
+          echo "✅ Infrastructure .env file created"
+
+      # Step 6: Build infrastructure
+      - name: Build infrastructure
+        working-directory: ./infrastructure
+        run: npm run build
+
+      # Step 7: Synthesize CDK stacks
+      - name: Synthesize CDK stacks
+        working-directory: ./infrastructure
+        run: npm run synth
+
+      # Step 8: Deploy infrastructure stacks
+      - name: Deploy Network stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Network stack..."
+          npx cdk deploy nestjs-playground-network-${{ inputs.environment }} --require-approval never
+          echo "✅ Network stack deployed successfully"
+
+      - name: Deploy Database stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Database stack..."
+          npx cdk deploy nestjs-playground-database-${{ inputs.environment }} --require-approval never
+          echo "✅ Database stack deployed successfully"
+
+      - name: Deploy Compute stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Compute stack..."
+          npx cdk deploy nestjs-playground-compute-${{ inputs.environment }} --require-approval never --context appVersion=${{ inputs.image_tag }}
+          echo "✅ Compute stack deployed successfully"
+
+      - name: Deploy Scheduled Task stack
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Deploying Scheduled Task stack..."
+          npx cdk deploy nestjs-playground-scheduled-task-${{ inputs.environment }} --require-approval never --context appVersion=${{ inputs.image_tag }}
+          echo "✅ Scheduled Task stack deployed successfully"
+
+      # Step 9: Update ECS services with specified image tag
+      - name: Update ECS API service
+        run: |
+          CLUSTER_NAME="nestjs-playground-${{ inputs.environment }}"
+          SERVICE_NAME="nestjs-playground-${{ inputs.environment }}"
+
+          echo "🔄 Forcing ECS service update with image tag: ${{ inputs.image_tag }}"
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment \
+            --region ${{ inputs.aws_region }}
+
+          echo "✅ ECS API service update triggered"
+
+      - name: Update ECS Scheduled Task service
+        run: |
+          CLUSTER_NAME="nestjs-playground-${{ inputs.environment }}"
+          SERVICE_NAME="nestjs-playground-scheduler-${{ inputs.environment }}"
+
+          echo "🔍 Checking if scheduled task service exists..."
+          if aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --region ${{ inputs.aws_region }} \
+            --query 'services[?status==`ACTIVE`].serviceName' \
+            --output text | grep -q "$SERVICE_NAME"; then
+            
+            echo "✅ Scheduled task service found"
+            echo "🔄 Forcing ECS service update with image tag: ${{ inputs.image_tag }}"
+            aws ecs update-service \
+              --cluster $CLUSTER_NAME \
+              --service $SERVICE_NAME \
+              --force-new-deployment \
+              --region ${{ inputs.aws_region }}
+
+            echo "✅ ECS scheduled task service update triggered"
+          else
+            echo "⚠️ Scheduled task service not found or not active, skipping"
+          fi
+
+      # Step 10: Cleanup
+      - name: Cleanup sensitive files
+        if: always()
+        working-directory: ./infrastructure
+        run: |
+          rm -f .env
+          rm -rf cdk.out
+          echo "✅ Cleaned up sensitive files"
