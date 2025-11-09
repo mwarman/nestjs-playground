@@ -41,6 +41,7 @@ describe('Configuration', () => {
         DB_MIGRATIONS_RUN: true,
         DB_SSL: true,
       });
+      expect(result).not.toHaveProperty('APP_VERSION');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
 
@@ -457,6 +458,58 @@ describe('Configuration', () => {
           'http://localhost:3000',
           'https://api.test.com',
         ]);
+      });
+    });
+
+    describe('APP_VERSION', () => {
+      it('should not include APP_VERSION when undefined', () => {
+        // Arrange
+        const input = {};
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result).not.toHaveProperty('APP_VERSION');
+      });
+
+      it('should include APP_VERSION when provided', () => {
+        // Arrange
+        const input = {
+          APP_VERSION: '1.2.3',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.APP_VERSION).toBe('1.2.3');
+      });
+
+      it('should include APP_VERSION with build metadata', () => {
+        // Arrange
+        const input = {
+          APP_VERSION: '1.2.3+build.123',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.APP_VERSION).toBe('1.2.3+build.123');
+      });
+
+      it('should include APP_VERSION with prerelease identifier', () => {
+        // Arrange
+        const input = {
+          APP_VERSION: '1.2.3-alpha.1',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.APP_VERSION).toBe('1.2.3-alpha.1');
       });
     });
   });

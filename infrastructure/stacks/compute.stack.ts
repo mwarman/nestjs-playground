@@ -29,6 +29,7 @@ export interface ComputeStackProps extends cdk.StackProps {
   serviceMinCapacity: number;
   serviceMaxCapacity: number;
   environment: string;
+  appVersion?: string;
 }
 
 export class ComputeStack extends cdk.Stack {
@@ -73,7 +74,7 @@ export class ComputeStack extends cdk.Stack {
 
     // Add container to task definition
     const container = taskDefinition.addContainer('ApplicationContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(props.repository, 'latest'),
+      image: ecs.ContainerImage.fromEcrRepository(props.repository, props.appVersion || 'latest'),
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: 'ecs',
         logGroup,
@@ -87,6 +88,7 @@ export class ComputeStack extends cdk.Stack {
         LOGGING_FORMAT: 'json', // Enable JSON logging in the application
         CORS_ALLOWED_ORIGIN: props.corsAllowedOrigin,
         JWT_EXPIRES_IN: props.jwtExpiresIn,
+        ...(props.appVersion && { APP_VERSION: props.appVersion }),
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(props.databaseSecret, 'host'),

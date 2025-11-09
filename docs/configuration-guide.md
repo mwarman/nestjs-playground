@@ -21,6 +21,7 @@ The following environment variables are available for configuration:
 
 | Name                       | Description                                                                                                                                                     | Default Value   |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| APP_VERSION                | **Optional.** Application version string. Used for version health check. If not provided, falls back to version from package.json.                              | _Not set_       |
 | APP_PORT                   | The port on which the application will run.                                                                                                                     | 3001            |
 | LOGGING_LEVEL              | The logging level for the application. Allowed values: verbose, debug, log, warn, error, fatal                                                                  | log             |
 | CORS_ALLOWED_ORIGIN        | CORS allowed origins. Use "\*" to allow all origins, or comma-separated list for specific origins (e.g., "https://app.com,http://localhost:3000")               | \*              |
@@ -110,6 +111,7 @@ Common examples:
 ############################################################
 
 # Application Settings
+APP_VERSION=0.1.0
 APP_PORT=3001
 
 # Logging Settings

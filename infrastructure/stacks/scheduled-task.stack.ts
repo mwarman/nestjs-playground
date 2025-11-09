@@ -18,6 +18,7 @@ export interface ScheduledTaskStackProps extends cdk.StackProps {
   scheduleTaskCleanupCron?: string;
   hasScheduledTasks: boolean;
   environment: string;
+  appVersion?: string;
 }
 
 export class ScheduledTaskStack extends cdk.Stack {
@@ -50,7 +51,7 @@ export class ScheduledTaskStack extends cdk.Stack {
 
     // Add container to task definition - same image but configured for scheduled tasks
     taskDefinition.addContainer('ScheduledTaskContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(props.repository, 'latest'),
+      image: ecs.ContainerImage.fromEcrRepository(props.repository, props.appVersion || 'latest'),
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: 'ecs-scheduler',
         logGroup,
@@ -63,6 +64,7 @@ export class ScheduledTaskStack extends cdk.Stack {
         LOGGING_FORMAT: 'json', // Enable JSON logging in the application
         // This environment variable tells the NestJS app to run scheduled tasks
         SCHEDULE_TASK_CLEANUP_CRON: props.scheduleTaskCleanupCron!, // Safe to use ! since hasScheduledTasks guarantees this exists
+        ...(props.appVersion && { APP_VERSION: props.appVersion }),
       },
       secrets: {
         DB_HOST: ecs.Secret.fromSecretsManager(props.databaseSecret, 'host'),
