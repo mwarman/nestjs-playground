@@ -489,14 +489,14 @@ describe('Configuration', () => {
       it('should include APP_VERSION with build metadata', () => {
         // Arrange
         const input = {
-          APP_VERSION: '1.2.3+build.123',
+          APP_VERSION: '1.2.3-build.123',
         };
 
         // Act
         const result = validate(input);
 
         // Assert
-        expect(result.APP_VERSION).toBe('1.2.3+build.123');
+        expect(result.APP_VERSION).toBe('1.2.3-build.123');
       });
 
       it('should include APP_VERSION with prerelease identifier', () => {

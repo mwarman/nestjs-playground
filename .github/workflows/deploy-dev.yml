@@ -118,8 +118,9 @@ jobs:
           BUILD_SHA="${{ github.sha }}"
           SHORT_SHA="${BUILD_SHA:0:7}"
 
-          # Create semver with build metadata
-          SEMVER="${PKG_VERSION}+build.${BUILD_NUMBER}.${SHORT_SHA}"
+          # Create semver-compatible tag for ECR (using hyphen instead of plus)
+          # ECR only allows: [a-zA-Z0-9-_.] characters
+          SEMVER="${PKG_VERSION}-build.${BUILD_NUMBER}.${SHORT_SHA}"
 
           echo "Package version: ${PKG_VERSION}"
           echo "Build number: ${BUILD_NUMBER}"

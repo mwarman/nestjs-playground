@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       current_tag:
-        description: 'Current container image tag (e.g., 0.1.0+build.123.abc1234, or latest)'
+        description: 'Current container image tag (e.g., 0.1.0-build.123.abc1234, or latest)'
         required: true
         type: string
       new_tag:
@@ -108,9 +108,14 @@ jobs:
 
           # Show image details
           echo "📋 Image details:"
-          aws ecr describe-images \
+          IMAGE_DETAILS=$(aws ecr describe-images \
             --repository-name $REPOSITORY_NAME \
             --image-ids imageTag=${{ inputs.new_tag }} \
             --region ${{ vars.AWS_REGION }} \
-            --query 'imageDetails[0].[imageTags,imagePushedAt,imageSizeInBytes]' \
-            --output table
+            --query 'imageDetails[0]' \
+            --output json)
+
+          echo "  Tags: $(echo $IMAGE_DETAILS | jq -r '.imageTags | join(", ")')"
+          echo "  Pushed: $(echo $IMAGE_DETAILS | jq -r '.imagePushedAt')"
+          echo "  Size: $(echo $IMAGE_DETAILS | jq -r '.imageSizeInBytes') bytes"
+          echo "  Digest: $(echo $IMAGE_DETAILS | jq -r '.imageDigest')"
