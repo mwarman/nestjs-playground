@@ -91,14 +91,15 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
      - Deploy ECR stack (container registry)
      - Generate semver tag from package.json version and build metadata
      - Build Docker image
-     - Push image with both `latest` and semver tags (e.g., `0.1.0+build.123.abc1234`)
+     - Push image with both `latest` and semver tags (e.g., `0.1.0-build.123.abc1234`)
   4. **Deployment:**
      - Call reusable release workflow with generated semver tag
      - Deploy infrastructure and application
   5. **Cleanup:**
      - Remove sensitive files (`.env`, `cdk.out`)
-- **Semver Tag Format:** `{package.json.version}+build.{run_number}.{short_sha}`
-  - Example: `0.1.0+build.42.abc1234`
+- **Semver Tag Format:** `{package.json.version}-build.{run_number}.{short_sha}`
+  - Example: `0.1.0-build.42.abc1234`
+  - Note: Uses hyphen instead of plus sign to comply with ECR tag naming constraints
 - **Security Features:**
   - Uses OIDC for AWS authentication (no long-lived credentials)
   - Automatic cleanup of sensitive files
@@ -112,7 +113,7 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
 - **Triggers:**
   - Called by other workflows (deploy-dev, release-manual)
 - **Inputs:**
-  - `image_tag` - Container image tag to deploy (e.g., `0.1.0+build.123.abc1234`, `latest`)
+  - `image_tag` - Container image tag to deploy (e.g., `0.1.0-build.123.abc1234`, `latest`)
   - `environment` - Target environment (dev, qa, prd)
   - `aws_region` - AWS region for deployment
   - `aws_role_arn` - AWS IAM role ARN for the environment
@@ -135,7 +136,7 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
 - **Triggers:**
   - Manual: Via GitHub Actions UI (workflow_dispatch)
 - **Inputs:**
-  - `image_tag` - Container image tag to deploy (e.g., `0.1.0+build.123.abc1234`, `latest`)
+  - `image_tag` - Container image tag to deploy (e.g., `0.1.0-build.123.abc1234`, `latest`)
   - `environment` - Target environment (dev, qa, prd) - dropdown selection
 - **Main Steps:**
   - Configures AWS credentials based on selected environment
@@ -152,7 +153,7 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
 - **Triggers:**
   - Manual: Via GitHub Actions UI (workflow_dispatch)
 - **Inputs:**
-  - `current_tag` - Existing image tag (e.g., `0.1.0+build.123.abc1234`)
+  - `current_tag` - Existing image tag (e.g., `0.1.0-build.123.abc1234`)
   - `new_tag` - New tag to apply (e.g., `0.1.0`, `v0.1.0`, `stable`)
   - `environment` - Environment (determines AWS account)
 - **Main Steps:**
@@ -161,8 +162,8 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
   3. Apply new tag to the same image
   4. Verify new tag was created successfully
 - **Use Cases:**
-  - Tag a semver build as a release version (e.g., `0.1.0+build.42.abc1234` → `0.1.0`)
-  - Mark an image as stable or approved (e.g., `0.1.0+build.42.abc1234` → `stable`)
+  - Tag a semver build as a release version (e.g., `0.1.0-build.42.abc1234` → `0.1.0`)
+  - Mark an image as stable or approved (e.g., `0.1.0-build.42.abc1234` → `stable`)
   - Create semantic version tags for release tracking
 - **Importance:** Enables flexible version management and release processes without rebuilding images.
 

@@ -99,15 +99,15 @@ describe('VersionHealthIndicator', () => {
 
       it('should support semver with build metadata', () => {
         // Arrange
-        configService.get.mockReturnValue('1.2.3+build.456');
-        const expectedUpResult = { status: 'up', value: '1.2.3+build.456', source: 'env' };
+        configService.get.mockReturnValue('1.2.3-build.456');
+        const expectedUpResult = { status: 'up', value: '1.2.3-build.456', source: 'env' };
         mockHealthCheck.up.mockReturnValue(expectedUpResult);
 
         // Act
         const result = indicator.getValue(key);
 
         // Assert
-        expect(mockHealthCheck.up).toHaveBeenCalledWith({ value: '1.2.3+build.456', source: 'env' });
+        expect(mockHealthCheck.up).toHaveBeenCalledWith({ value: '1.2.3-build.456', source: 'env' });
         expect(result).toBe(expectedUpResult);
       });
     });

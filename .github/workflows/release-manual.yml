@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Container image tag to deploy (e.g., 0.1.0+build.123.abc1234, or latest)'
+        description: 'Container image tag to deploy (e.g., 0.1.0-build.123.abc1234, or latest)'
         required: true
         type: string
       environment:
