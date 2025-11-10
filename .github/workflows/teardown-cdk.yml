@@ -1,0 +1,60 @@
+name: Teardown Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to teardown'
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - prd
+
+concurrency:
+  group: teardown-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  teardown:
+    name: Teardown infrastructure in ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Step 2: Setup Node.js using .nvmrc
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      # Step 3: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.environment == 'dev' && vars.AWS_ROLE_ARN_DEV || inputs.environment == 'qa' && vars.AWS_ROLE_ARN_QA || vars.AWS_ROLE_ARN_PRD }}
+          role-session-name: teardown-nestjs-playground-${{ inputs.environment }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Step 4: Install infrastructure dependencies
+      - name: Install infrastructure dependencies
+        working-directory: ./infrastructure
+        run: npm ci
+
+      # Step 5: Destroy all stacks
+      - name: Destroy all stacks
+        working-directory: ./infrastructure
+        run: |
+          echo "🚀 Destroying all stacks..."
+          npx cdk destroy --all --require-approval never
+          echo "✅ All stacks destroyed successfully"
