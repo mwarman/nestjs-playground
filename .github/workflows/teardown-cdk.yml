@@ -51,7 +51,19 @@ jobs:
         working-directory: ./infrastructure
         run: npm ci
 
-      # Step 5: Destroy all stacks
+      # Step 5: Create infrastructure .env file
+      - name: Create infrastructure .env file
+        working-directory: ./infrastructure
+        run: |
+          echo "${{ inputs.environment == 'dev' && vars.CDK_ENV_DEV || inputs.environment == 'qa' && vars.CDK_ENV_QA || vars.CDK_ENV_PRD }}" > .env
+          echo "✅ Infrastructure .env file created"
+
+      # Step 6: Synthesize CDK stacks
+      - name: Synthesize CDK stacks
+        working-directory: ./infrastructure
+        run: npm run synth
+
+      # Step 7: Destroy all stacks
       - name: Destroy all stacks
         working-directory: ./infrastructure
         run: |
