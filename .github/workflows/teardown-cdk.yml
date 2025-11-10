@@ -68,5 +68,5 @@ jobs:
         working-directory: ./infrastructure
         run: |
           echo "🚀 Destroying all stacks..."
-          npx cdk destroy --all --require-approval never
+          npx cdk destroy --all --force
           echo "✅ All stacks destroyed successfully"
