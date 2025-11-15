@@ -18,6 +18,7 @@ export class EcrStack extends cdk.Stack {
       repositoryName: props.appName,
       imageScanOnPush: true,
       imageTagMutability: ecr.TagMutability.MUTABLE,
+      emptyOnDelete: props.environment !== 'prd', // In non-prod, allow emptying the repo when stack is deleted
       removalPolicy: props.environment === 'prd' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY, // In non-prod, allow deletion of the repo when stack is destroyed
     });
 
