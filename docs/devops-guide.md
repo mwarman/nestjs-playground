@@ -167,6 +167,38 @@ Currently, the project uses GitHub Actions for CI/CD. Below is a detailed descri
   - Create semantic version tags for release tracking
 - **Importance:** Enables flexible version management and release processes without rebuilding images.
 
+### Teardown Infrastructure Workflow (`teardown-manual.yml`)
+
+- **Purpose:** Manually destroy all AWS CDK infrastructure for a specific environment.
+- **Triggers:**
+  - Manual: Via GitHub Actions UI (workflow_dispatch)
+- **Inputs:**
+  - `environment` - Target environment to teardown (dev, qa, prd) - dropdown selection
+- **Prerequisites:**
+  - GitHub Actions variables must be configured:
+    - `AWS_ROLE_ARN_DEV`, `AWS_ROLE_ARN_QA`, `AWS_ROLE_ARN_PRD` - AWS IAM Role ARNs for each environment
+    - `AWS_REGION` - AWS Region for deployment
+    - `CDK_ENV_DEV`, `CDK_ENV_QA`, `CDK_ENV_PRD` - Complete `.env` file content for CDK infrastructure
+- **Main Steps:**
+  1. Checkout repository
+  2. Setup Node.js (from `.nvmrc`)
+  3. Configure AWS credentials for selected environment
+  4. Install infrastructure dependencies
+  5. Create infrastructure `.env` file from GitHub variables
+  6. Synthesize CDK stacks
+  7. Destroy all CDK stacks with force flag
+- **Security Features:**
+  - Uses OIDC for AWS authentication (no long-lived credentials)
+  - Proper IAM role assumption with session naming
+  - Concurrency control prevents simultaneous teardowns of the same environment
+- **Timeout:** 45 minutes to allow for complete stack deletion
+- **Use Cases:**
+  - Clean up temporary or test environments
+  - Remove infrastructure to reduce costs
+  - Reset environment to baseline state
+- **Importance:** Provides safe and controlled way to remove all infrastructure resources. Essential for cost management and environment lifecycle management.
+- **⚠️ Warning:** This action is destructive and will delete all infrastructure resources including databases, networking, and compute resources. Use with caution, especially in production environments.
+
 ---
 
 ## Additional Resources
