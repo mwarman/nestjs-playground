@@ -37,6 +37,13 @@ const configurationSchema = z
     CDK_DATABASE_USERNAME: z.string().min(1).default('postgres'),
     CDK_DATABASE_MIN_CAPACITY: z.coerce.number().positive().default(0.5),
     CDK_DATABASE_MAX_CAPACITY: z.coerce.number().positive().default(1),
+    CDK_DATABASE_READ_REPLICA: z.preprocess((val) => {
+      if (typeof val === 'string') {
+        if (val.toLowerCase() === 'false' || val === '0') return false;
+        if (val.toLowerCase() === 'true' || val === '1') return true;
+      }
+      return val;
+    }, z.boolean().default(false)),
 
     // Required AWS infrastructure configuration
     CDK_HOSTED_ZONE_ID: z.string().min(1),

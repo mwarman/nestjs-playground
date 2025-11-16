@@ -33,6 +33,7 @@ const configSchema = z.object({
   DB_USER: z.string().default(DEFAULT_DB_USER),
   DB_PASS: z.string().default(DEFAULT_DB_PASS),
   DB_DATABASE: z.string().default(DEFAULT_DB_DATABASE),
+  DB_HOST_READ_ONLY: z.string().optional(),
   DB_MIGRATIONS_RUN: z.preprocess((val) => {
     if (typeof val === 'string') {
       if (val.toLowerCase() === 'false' || val === '0') return false;

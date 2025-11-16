@@ -10,6 +10,7 @@ export interface DatabaseStackProps extends cdk.StackProps {
   databaseUsername: string;
   databaseMinCapacity: number;
   databaseMaxCapacity: number;
+  databaseReadReplica: boolean;
   appName: string;
   environment: string;
 }
@@ -17,6 +18,7 @@ export interface DatabaseStackProps extends cdk.StackProps {
 export class DatabaseStack extends cdk.Stack {
   public readonly cluster: rds.DatabaseCluster;
   public readonly secret: secretsmanager.ISecret;
+  public readonly readReplicaSecret?: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string, props: DatabaseStackProps) {
     super(scope, id, props);
@@ -55,9 +57,13 @@ export class DatabaseStack extends cdk.Stack {
       writer: rds.ClusterInstance.serverlessV2('writer', {
         scaleWithWriter: true,
       }),
-      readers: [
-        // Cost optimization: no readers initially, can be added later if needed
-      ],
+      readers: props.databaseReadReplica
+        ? [
+            rds.ClusterInstance.serverlessV2('reader', {
+              scaleWithWriter: true,
+            }),
+          ]
+        : [],
       serverlessV2MinCapacity: props.databaseMinCapacity, // Configurable minimum ACUs
       serverlessV2MaxCapacity: props.databaseMaxCapacity, // Configurable maximum ACUs
       vpc: props.vpc,
@@ -74,6 +80,17 @@ export class DatabaseStack extends cdk.Stack {
 
     // Store reference to the generated secret
     this.secret = this.cluster.secret!;
+
+    // Create read replica secret if read replica is enabled
+    if (props.databaseReadReplica) {
+      this.readReplicaSecret = new secretsmanager.Secret(this, 'ReadReplicaSecret', {
+        secretName: `${props.appName}-${props.environment}-db-read-replica`,
+        description: 'Database read replica hostname',
+        secretObjectValue: {
+          host: cdk.SecretValue.unsafePlainText(this.cluster.clusterReadEndpoint.hostname),
+        },
+      });
+    }
 
     // Outputs
     new cdk.CfnOutput(this, 'DatabaseClusterEndpoint', {
@@ -99,5 +116,19 @@ export class DatabaseStack extends cdk.Stack {
       description: 'Database credentials secret ARN',
       exportName: `${props.appName}-${props.environment}-db-secret-arn`,
     });
+
+    if (props.databaseReadReplica && this.readReplicaSecret) {
+      new cdk.CfnOutput(this, 'DatabaseReadReplicaEndpoint', {
+        value: this.cluster.clusterReadEndpoint.hostname,
+        description: 'Database read replica endpoint',
+        exportName: `${props.appName}-${props.environment}-db-read-replica-endpoint`,
+      });
+
+      new cdk.CfnOutput(this, 'DatabaseReadReplicaSecretArn', {
+        value: this.readReplicaSecret.secretArn,
+        description: 'Database read replica secret ARN',
+        exportName: `${props.appName}-${props.environment}-db-read-replica-secret-arn`,
+      });
+    }
   }
 }

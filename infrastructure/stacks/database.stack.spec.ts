@@ -18,6 +18,7 @@ describe('DatabaseStack', () => {
     databaseUsername: 'testuser',
     databaseMinCapacity: 0.5,
     databaseMaxCapacity: 4,
+    databaseReadReplica: true,
     appName: 'test-app',
     environment: 'dev',
     env: {
@@ -403,6 +404,7 @@ describe('DatabaseStack', () => {
         databaseUsername: 'appuser',
         databaseMinCapacity: 0.5,
         databaseMaxCapacity: 2,
+        databaseReadReplica: false,
         appName: 'my-app',
         environment: 'test',
       };
@@ -438,6 +440,134 @@ describe('DatabaseStack', () => {
         DatabaseName: 'production_db',
         MasterUsername: 'prod_user',
       });
+    });
+  });
+
+  describe('Read Replica Configuration', () => {
+    it('should not create read replica when databaseReadReplica is false', () => {
+      // Arrange
+      const noReplicaApp = new cdk.App();
+      const noReplicaStack = new cdk.Stack(noReplicaApp, 'NoReplicaTestStack', { env: defaultProps.env });
+      const noReplicaVpc = new ec2.Vpc(noReplicaStack, 'NoReplicaVpc', { maxAzs: 2 });
+
+      // Create DatabaseStack with databaseReadReplica set to false
+      const noReplicaProps = {
+        ...defaultProps,
+        databaseReadReplica: false,
+      };
+
+      const dbStackNoReplica = new DatabaseStack(noReplicaApp, 'DatabaseStackNoReplica', {
+        ...noReplicaProps,
+        vpc: noReplicaVpc,
+      });
+
+      // Act & Assert
+      // Should not have read replica secret
+      expect(dbStackNoReplica.readReplicaSecret).toBeUndefined();
+    });
+
+    it('should create read replica when databaseReadReplica is true', () => {
+      // Arrange
+      const withReplicaApp = new cdk.App();
+      const withReplicaStack = new cdk.Stack(withReplicaApp, 'WithReplicaTestStack', { env: defaultProps.env });
+      const withReplicaVpc = new ec2.Vpc(withReplicaStack, 'WithReplicaVpc', { maxAzs: 2 });
+
+      // Create DatabaseStack with databaseReadReplica set to true
+      const withReplicaProps = {
+        ...defaultProps,
+        databaseReadReplica: true,
+      };
+
+      const dbStackWithReplica = new DatabaseStack(withReplicaApp, 'DatabaseStackWithReplica', {
+        ...withReplicaProps,
+        vpc: withReplicaVpc,
+      });
+
+      // Act & Assert
+      // Should have read replica secret
+      expect(dbStackWithReplica.readReplicaSecret).toBeDefined();
+      expect(dbStackWithReplica.cluster).toBeDefined();
+    });
+
+    it('should create read replica secret with correct name', () => {
+      // Arrange
+      const withReplicaApp = new cdk.App();
+      const withReplicaStack = new cdk.Stack(withReplicaApp, 'WithReplicaTestStack2', { env: defaultProps.env });
+      const withReplicaVpc = new ec2.Vpc(withReplicaStack, 'WithReplicaVpc2', { maxAzs: 2 });
+
+      const withReplicaProps = {
+        ...defaultProps,
+        databaseReadReplica: true,
+      };
+
+      const dbStackWithReplica = new DatabaseStack(withReplicaApp, 'DatabaseStackWithReplica2', {
+        ...withReplicaProps,
+        vpc: withReplicaVpc,
+      });
+      const withReplicaTemplate = Template.fromStack(dbStackWithReplica);
+
+      // Act & Assert
+      withReplicaTemplate.hasResourceProperties('AWS::SecretsManager::Secret', {
+        Name: 'test-app-dev-db-read-replica',
+        Description: 'Database read replica hostname',
+      });
+    });
+
+    it('should export read replica endpoint when read replica is enabled', () => {
+      // Arrange
+      const withReplicaApp = new cdk.App();
+      const withReplicaStack = new cdk.Stack(withReplicaApp, 'WithReplicaTestStack3', { env: defaultProps.env });
+      const withReplicaVpc = new ec2.Vpc(withReplicaStack, 'WithReplicaVpc3', { maxAzs: 2 });
+
+      const withReplicaProps = {
+        ...defaultProps,
+        databaseReadReplica: true,
+      };
+
+      const dbStackWithReplica = new DatabaseStack(withReplicaApp, 'DatabaseStackWithReplica3', {
+        ...withReplicaProps,
+        vpc: withReplicaVpc,
+      });
+      const withReplicaTemplate = Template.fromStack(dbStackWithReplica);
+
+      // Act & Assert
+      withReplicaTemplate.hasOutput('DatabaseReadReplicaEndpoint', {
+        Description: 'Database read replica endpoint',
+        Export: {
+          Name: 'test-app-dev-db-read-replica-endpoint',
+        },
+      });
+
+      withReplicaTemplate.hasOutput('DatabaseReadReplicaSecretArn', {
+        Description: 'Database read replica secret ARN',
+        Export: {
+          Name: 'test-app-dev-db-read-replica-secret-arn',
+        },
+      });
+    });
+
+    it('should not export read replica outputs when read replica is disabled', () => {
+      // Arrange
+      const noReplicaApp = new cdk.App();
+      const noReplicaStack = new cdk.Stack(noReplicaApp, 'NoReplicaTestStack2', { env: defaultProps.env });
+      const noReplicaVpc = new ec2.Vpc(noReplicaStack, 'NoReplicaVpc2', { maxAzs: 2 });
+
+      const noReplicaProps = {
+        ...defaultProps,
+        databaseReadReplica: false,
+      };
+
+      const dbStackNoReplica = new DatabaseStack(noReplicaApp, 'DatabaseStackNoReplica2', {
+        ...noReplicaProps,
+        vpc: noReplicaVpc,
+      });
+      const noReplicaTemplate = Template.fromStack(dbStackNoReplica);
+
+      // Act & Assert
+      // Verify read replica outputs do not exist
+      const outputs = noReplicaTemplate.toJSON().Outputs as Record<string, unknown> | undefined;
+      expect(outputs?.['DatabaseReadReplicaEndpoint']).toBeUndefined();
+      expect(outputs?.['DatabaseReadReplicaSecretArn']).toBeUndefined();
     });
   });
 });

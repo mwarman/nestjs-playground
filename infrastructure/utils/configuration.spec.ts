@@ -216,6 +216,62 @@ describe('Configuration Utility', () => {
         // Assert - hasScheduledTasks should be false when cron is not configured
         expect(config.hasScheduledTasks).toBe(false);
       });
+
+      it('should default CDK_DATABASE_READ_REPLICA to false when not provided', () => {
+        // Arrange
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert
+        expect(config.CDK_DATABASE_READ_REPLICA).toBe(false);
+      });
+
+      it('should handle CDK_DATABASE_READ_REPLICA when set to true', () => {
+        // Arrange
+        process.env.CDK_DATABASE_READ_REPLICA = 'true';
+        process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+        process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+        process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+        process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+        // Act
+        const config = loadConfiguration();
+
+        // Assert
+        expect(config.CDK_DATABASE_READ_REPLICA).toBe(true);
+      });
+
+      it('should handle CDK_DATABASE_READ_REPLICA string coercion', () => {
+        // Arrange - Test various boolean string representations
+        const testCases = [
+          { value: 'false', expected: false },
+          { value: 'true', expected: true },
+          { value: '0', expected: false },
+          { value: '1', expected: true },
+          { value: 'FALSE', expected: false },
+          { value: 'TRUE', expected: true },
+        ];
+
+        testCases.forEach(({ value, expected }) => {
+          process.env = {};
+          process.env.CDK_DATABASE_READ_REPLICA = value;
+          process.env.CDK_HOSTED_ZONE_ID = 'Z123456789';
+          process.env.CDK_HOSTED_ZONE_NAME = 'example.com';
+          process.env.CDK_CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:123456789:certificate/test';
+          process.env.CDK_DOMAIN_NAME = 'api.example.com';
+
+          // Act
+          const config = loadConfiguration();
+
+          // Assert
+          expect(config.CDK_DATABASE_READ_REPLICA).toBe(expected);
+        });
+      });
     });
 
     describe('with invalid configuration', () => {

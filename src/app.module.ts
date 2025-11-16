@@ -51,6 +51,32 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
       }),
       inject: [ConfigService],
     }),
+    TypeOrmModule.forRootAsync({
+      name: 'read-only',
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const readOnlyHost = configService.get<string>('DB_HOST_READ_ONLY') || configService.get<string>('DB_HOST')!;
+        return {
+          type: 'postgres',
+          host: readOnlyHost,
+          port: configService.get('DB_PORT'),
+          username: configService.get('DB_USER'),
+          password: configService.get('DB_PASS'),
+          database: configService.get('DB_DATABASE'),
+          ssl: configService.get('DB_SSL') ? { rejectUnauthorized: false } : false,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: false,
+          logging: true,
+          extra: {
+            min: 5,
+            max: 10,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     TasksModule,
     HealthModule,
     AuthModule,

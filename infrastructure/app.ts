@@ -49,6 +49,7 @@ const databaseStack = new DatabaseStack(app, `${config.CDK_APP_NAME}-database-${
   databaseUsername: config.CDK_DATABASE_USERNAME,
   databaseMinCapacity: config.CDK_DATABASE_MIN_CAPACITY,
   databaseMaxCapacity: config.CDK_DATABASE_MAX_CAPACITY,
+  databaseReadReplica: config.CDK_DATABASE_READ_REPLICA,
   appName: config.CDK_APP_NAME,
   environment: config.CDK_ENVIRONMENT,
 });
@@ -60,6 +61,7 @@ const computeStack = new ComputeStack(app, `${config.CDK_APP_NAME}-compute-${con
   vpc: networkStack.vpc,
   repository: ecrStack.repository,
   databaseSecret: databaseStack.secret,
+  databaseReadReplicaSecret: databaseStack.readReplicaSecret,
   hostedZone: networkStack.hostedZone,
   certificate: networkStack.certificate,
   fqdn: networkStack.fqdn,
@@ -88,6 +90,7 @@ const scheduledTaskStack = new ScheduledTaskStack(
     cluster: computeStack.cluster,
     repository: ecrStack.repository,
     databaseSecret: databaseStack.secret,
+    databaseReadReplicaSecret: databaseStack.readReplicaSecret,
     appName: config.CDK_APP_NAME,
     loggingLevel: config.CDK_APP_LOGGING_LEVEL,
     taskMemoryMb: config.CDK_SCHEDULER_TASK_MEMORY_MB,

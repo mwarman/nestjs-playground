@@ -461,6 +461,54 @@ describe('Configuration', () => {
       });
     });
 
+    describe('DB_HOST_READ_ONLY', () => {
+      it('should not include DB_HOST_READ_ONLY when undefined', () => {
+        // Arrange
+        const input = {};
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result).not.toHaveProperty('DB_HOST_READ_ONLY');
+      });
+
+      it('should include DB_HOST_READ_ONLY when provided', () => {
+        // Arrange
+        const input = {
+          DB_HOST_READ_ONLY: 'read-replica.example.com',
+        };
+
+        // Act
+        const result = validate(input);
+
+        // Assert
+        expect(result.DB_HOST_READ_ONLY).toBe('read-replica.example.com');
+      });
+
+      it('should accept any valid hostname or IP address', () => {
+        // Arrange
+        const testCases = [
+          'localhost',
+          '127.0.0.1',
+          'db-read.example.com',
+          'read-replica-1.us-east-1.rds.amazonaws.com',
+        ];
+
+        testCases.forEach((hostname) => {
+          const input = {
+            DB_HOST_READ_ONLY: hostname,
+          };
+
+          // Act
+          const result = validate(input);
+
+          // Assert
+          expect(result.DB_HOST_READ_ONLY).toBe(hostname);
+        });
+      });
+    });
+
     describe('APP_VERSION', () => {
       it('should not include APP_VERSION when undefined', () => {
         // Arrange

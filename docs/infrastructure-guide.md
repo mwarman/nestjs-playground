@@ -87,7 +87,23 @@ CDK_DATABASE_NAME = nestjs_playground;
 CDK_DATABASE_USERNAME = postgres;
 CDK_DATABASE_MIN_CAPACITY = 0.5; // Minimum ACUs (configurable)
 CDK_DATABASE_MAX_CAPACITY = 1; // Maximum ACUs (configurable)
+CDK_DATABASE_READ_REPLICA = false; // Enable read replica (default: false)
 ```
+
+**Read Replica Support**:
+
+When `CDK_DATABASE_READ_REPLICA=true`:
+
+- Creates a serverless v2 reader instance in the Aurora cluster
+- Stores the read endpoint hostname in a separate AWS Secrets Manager secret
+- Passes the read replica hostname to the application as `DB_HOST_READ_ONLY`
+- Application creates a read-only TypeORM data source using the replica endpoint
+- Falls back to primary host if `DB_HOST_READ_ONLY` is not provided
+
+When `CDK_DATABASE_READ_REPLICA=false` (default):
+
+- No reader instances are created (cost optimization)
+- Application uses the primary database for all operations
 
 **Cost Optimization Features**:
 
@@ -95,6 +111,7 @@ CDK_DATABASE_MAX_CAPACITY = 1; // Maximum ACUs (configurable)
 - Configurable maximum capacity: 1-16 ACUs (default: 1)
 - Automatic pausing when inactive (scale-to-zero capability)
 - Backup retention: 7 days (production) / 1 day (non-production)
+- Read replicas are optional and can be disabled for non-production environments
 
 **Connection Details**:
 
@@ -168,8 +185,11 @@ DB_PORT: '5432'; // from Aurora Secrets Manager
 DB_USER: 'postgres'; // from Aurora Secrets Manager
 DB_PASS: 'auto-generated'; // from Aurora Secrets Manager
 DB_DATABASE: 'nestjs_playground'; // from Aurora Secrets Manager
+DB_HOST_READ_ONLY: 'read endpoint'; // from Read Replica Secrets Manager (optional)
 JWT_SECRET: 'secure-jwt-secret'; // from Parameter Store: /nestjs-playground/jwt-secret
 ```
+
+**Note**: `DB_HOST_READ_ONLY` is only injected when `CDK_DATABASE_READ_REPLICA=true` in the infrastructure configuration.
 
 ### Scheduled Task Stack (`scheduled-task.stack.ts`)
 
@@ -389,12 +409,20 @@ All configuration uses environment variables prefixed with `CDK_`:
 
 #### Database Variables
 
-| Variable                    | Purpose           | Default             | Range  | Example    |
-| --------------------------- | ----------------- | ------------------- | ------ | ---------- |
-| `CDK_DATABASE_NAME`         | Database name     | `nestjs_playground` | -      | `myapp_db` |
-| `CDK_DATABASE_USERNAME`     | Database username | `postgres`          | -      | `admin`    |
-| `CDK_DATABASE_MIN_CAPACITY` | Min Aurora ACUs   | `0.5`               | 0.5-16 | `1.0`      |
-| `CDK_DATABASE_MAX_CAPACITY` | Max Aurora ACUs   | `1`                 | 1-16   | `4.0`      |
+| Variable                    | Purpose             | Default             | Range      | Example    |
+| --------------------------- | ------------------- | ------------------- | ---------- | ---------- |
+| `CDK_DATABASE_NAME`         | Database name       | `nestjs_playground` | -          | `myapp_db` |
+| `CDK_DATABASE_USERNAME`     | Database username   | `postgres`          | -          | `admin`    |
+| `CDK_DATABASE_MIN_CAPACITY` | Min Aurora ACUs     | `0.5`               | 0.5-16     | `1.0`      |
+| `CDK_DATABASE_MAX_CAPACITY` | Max Aurora ACUs     | `1`                 | 1-16       | `4.0`      |
+| `CDK_DATABASE_READ_REPLICA` | Enable read replica | `false`             | true/false | `true`     |
+
+**Read Replica Notes:**
+
+- When `CDK_DATABASE_READ_REPLICA=true`: Creates a reader instance and stores hostname in Secrets Manager
+- When `CDK_DATABASE_READ_REPLICA=false` (default): No reader instances created (cost optimization)
+- The read replica hostname is passed to the application as `DB_HOST_READ_ONLY`
+- Application creates a separate read-only TypeORM connection for read operations
 
 #### Compute Variables
 

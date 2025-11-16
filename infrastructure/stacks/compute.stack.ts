@@ -15,6 +15,7 @@ export interface ComputeStackProps extends cdk.StackProps {
   vpc: ec2.IVpc;
   repository: ecr.IRepository;
   databaseSecret: secretsmanager.ISecret;
+  databaseReadReplicaSecret?: secretsmanager.ISecret;
   hostedZone: route53.IHostedZone;
   certificate: certificatemanager.ICertificate;
   fqdn: string;
@@ -57,6 +58,11 @@ export class ComputeStack extends cdk.Stack {
     // Grant task access to database secret
     props.databaseSecret.grantRead(taskDefinition.taskRole);
 
+    // Grant task access to read replica secret if it exists
+    if (props.databaseReadReplicaSecret) {
+      props.databaseReadReplicaSecret.grantRead(taskDefinition.taskRole);
+    }
+
     // Create reference to JWT secret parameter
     const jwtSecretParameter = ssm.StringParameter.fromSecureStringParameterAttributes(this, 'JWTSecretParameter', {
       parameterName: `/nestjs-playground/jwt-secret`,
@@ -97,6 +103,9 @@ export class ComputeStack extends cdk.Stack {
         DB_PASS: ecs.Secret.fromSecretsManager(props.databaseSecret, 'password'),
         DB_DATABASE: ecs.Secret.fromSecretsManager(props.databaseSecret, 'dbname'),
         JWT_SECRET: ecs.Secret.fromSsmParameter(jwtSecretParameter),
+        ...(props.databaseReadReplicaSecret && {
+          DB_HOST_READ_ONLY: ecs.Secret.fromSecretsManager(props.databaseReadReplicaSecret, 'host'),
+        }),
       },
     });
 

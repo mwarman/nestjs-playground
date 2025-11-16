@@ -11,6 +11,7 @@ export interface ScheduledTaskStackProps extends cdk.StackProps {
   cluster: ecs.ICluster;
   repository: ecr.IRepository;
   databaseSecret: secretsmanager.ISecret;
+  databaseReadReplicaSecret?: secretsmanager.ISecret;
   appName: string;
   loggingLevel: string;
   taskMemoryMb: number;
@@ -42,6 +43,11 @@ export class ScheduledTaskStack extends cdk.Stack {
     // Grant task access to database secret
     props.databaseSecret.grantRead(taskDefinition.taskRole);
 
+    // Grant task access to read replica secret if it exists
+    if (props.databaseReadReplicaSecret) {
+      props.databaseReadReplicaSecret.grantRead(taskDefinition.taskRole);
+    }
+
     // Create log group for scheduled tasks
     const logGroup = new logs.LogGroup(this, 'ScheduledTaskLogGroup', {
       logGroupName: `/ecs/${props.appName}-scheduler-${props.environment}`,
@@ -72,6 +78,9 @@ export class ScheduledTaskStack extends cdk.Stack {
         DB_USER: ecs.Secret.fromSecretsManager(props.databaseSecret, 'username'),
         DB_PASS: ecs.Secret.fromSecretsManager(props.databaseSecret, 'password'),
         DB_DATABASE: ecs.Secret.fromSecretsManager(props.databaseSecret, 'dbname'),
+        ...(props.databaseReadReplicaSecret && {
+          DB_HOST_READ_ONLY: ecs.Secret.fromSecretsManager(props.databaseReadReplicaSecret, 'host'),
+        }),
       },
     });
 
