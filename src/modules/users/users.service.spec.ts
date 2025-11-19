@@ -109,7 +109,7 @@ describe('UsersService', () => {
   describe('findOneBySub', () => {
     it('should return a user when found by sub', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(mockUser);
       const sub = 'test-sub';
 
       // Act
@@ -117,14 +117,14 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toEqual(mockUser);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { sub },
       });
     });
 
     it('should return null when user not found by sub', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(null);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(null);
       const sub = 'non-existent-sub';
 
       // Act
@@ -132,7 +132,7 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { sub },
       });
     });
@@ -141,7 +141,7 @@ describe('UsersService', () => {
   describe('findOneByUsername', () => {
     it('should return a user when found by username', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(mockUser);
       const username = 'johndoe';
 
       // Act
@@ -149,14 +149,14 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toEqual(mockUser);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { username },
       });
     });
 
     it('should return null when user not found by username', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(null);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(null);
       const username = 'non-existent-user';
 
       // Act
@@ -164,7 +164,7 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { username },
       });
     });

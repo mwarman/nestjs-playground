@@ -36,7 +36,7 @@ export class UsersService {
    * @returns A Promise that resolves to a User entity or null if not found.
    */
   async findOneBySub(sub: string): Promise<User | null> {
-    return this.userRepository.findOne({
+    return this.userRepositoryReadOnly.findOne({
       where: { sub },
     });
   }
@@ -47,7 +47,7 @@ export class UsersService {
    * @returns A Promise that resolves to a User entity or null if not found.
    */
   async findOneByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne({
+    return this.userRepositoryReadOnly.findOne({
       where: { username },
     });
   }
