@@ -21,14 +21,24 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
       useFactory: (configService: ConfigService) => ({
         pinoHttp: {
           level: configService.get<string>('LOGGING_LEVEL'),
-          transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+          transport:
+            process.env.NODE_ENV !== 'production'
+              ? {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,hostname,context,req,res,responseTime',
+                    messageFormat:
+                      '{if req.method}{req.method}{req.url} {end}{if context}[{context}] {end}{msg}{if responseTime} {responseTime}ms{end}',
+                  },
+                }
+              : undefined,
         },
       }),
     }),
     CacheModule.register({ isGlobal: true, ttl: 5000 }), // Cache for 5 seconds by default
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule, LoggerModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get('DB_HOST'),
