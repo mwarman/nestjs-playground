@@ -9,6 +9,7 @@ applyTo: 'src/**/*.ts,!src/**/*.spec.ts'
 - Each feature should live inside its own module under `src/modules`. Avoid mixing responsibilities.
 - Always use DTOs (`class-validator`) for request validation. Avoid using raw objects directly in controllers.
 - Controllers should handle request/response, while business logic should reside in services.
+- Controllers should use Swagger decorators for API documentation.
 - Use NestJS’ DI system rather than manually instantiating classes.
 - Use global exception filters or custom exceptions to ensure consistent API error responses.
 - Load environment variables via `@nestjs/config` and centralize configs in `src/config`.
@@ -16,7 +17,7 @@ applyTo: 'src/**/*.ts,!src/**/*.spec.ts'
 - Follow Prettier formatting rules.
 - Keep functions small and focused.
 - Organize Imports:
-  - Group imports by external libraries, internal modules, and styles.
+  - Group imports by external libraries and internal modules.
   - Use absolute imports where possible (configure `tsconfig.json` accordingly).
 
 ## Commands & Scripts
