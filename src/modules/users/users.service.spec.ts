@@ -18,6 +18,10 @@ describe('UsersService', () => {
     save: jest.fn(),
   };
 
+  const mockUserRepositoryReadOnly = {
+    findOne: jest.fn(),
+  };
+
   const mockUser: User = {
     id: 'test-id',
     sub: 'test-sub',
@@ -39,6 +43,10 @@ describe('UsersService', () => {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
+        {
+          provide: getRepositoryToken(User, 'read-only'),
+          useValue: mockUserRepositoryReadOnly,
+        },
       ],
     }).compile();
 
@@ -56,7 +64,7 @@ describe('UsersService', () => {
   describe('findOne', () => {
     it('should return a user when found', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(mockUser);
       const userId = 'test-id';
 
       // Act
@@ -64,14 +72,14 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toEqual(mockUser);
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { id: userId },
       });
     });
 
     it('should return null when user not found', async () => {
       // Arrange
-      mockUserRepository.findOne.mockResolvedValue(null);
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(null);
       const userId = 'non-existent-id';
 
       // Act
@@ -79,9 +87,22 @@ describe('UsersService', () => {
 
       // Assert
       expect(result).toBeNull();
-      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledWith({
         where: { id: userId },
       });
+    });
+
+    it('should use the read-only repository', async () => {
+      // Arrange
+      mockUserRepositoryReadOnly.findOne.mockResolvedValue(mockUser);
+      const userId = 'test-id';
+
+      // Act
+      await service.findOne(userId);
+
+      // Assert
+      expect(mockUserRepositoryReadOnly.findOne).toHaveBeenCalledTimes(1);
+      expect(mockUserRepository.findOne).not.toHaveBeenCalled();
     });
   });
 

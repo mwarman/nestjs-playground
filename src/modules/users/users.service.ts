@@ -14,15 +14,18 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(User, 'read-only')
+    private readonly userRepositoryReadOnly: Repository<User>,
   ) {}
 
   /**
    * Fetch a single User from the database by id.
+   * Uses the read-only database connection for optimal performance.
    * @param id The user identifier.
    * @returns A Promise that resolves to a User entity or null if not found.
    */
   async findOne(id: string): Promise<User | null> {
-    return this.userRepository.findOne({
+    return this.userRepositoryReadOnly.findOne({
       where: { id },
     });
   }
