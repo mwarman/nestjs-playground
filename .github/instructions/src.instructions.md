@@ -4,8 +4,6 @@ applyTo: 'src/**/*.ts,!src/**/*.spec.ts'
 
 # Source Code Guidelines
 
-## Development Guidelines
-
 - Each feature should live inside its own module under `src/modules`. Avoid mixing responsibilities.
 - Always use DTOs (`class-validator`) for request validation. Avoid using raw objects directly in controllers.
 - Controllers should handle request/response, while business logic should reside in services.

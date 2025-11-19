@@ -2,7 +2,7 @@
 applyTo: 'infrastructure/**'
 ---
 
-## AWS CDK Guidelines
+# AWS CDK Infrastructure Guidelines
 
 - Define one CDK stack per major grouping of resources (e.g., Network stack, database stack, compute stack).
 - Use **.env** for environment variables prefixed with `CDK_`, but avoid committing this file
