@@ -33,6 +33,7 @@ The following environment variables are available for configuration:
 | DB_HOST_READ_ONLY          | **Optional.** PostgreSQL read replica host. If not provided, uses DB_HOST for read operations. Enables read-write splitting for database load balancing.        | _Not set_       |
 | DB_SSL                     | Enable SSL for PostgreSQL connection. Allowed: true, false, "true", "false", 1, 0. Useful for cloud DBs or production.                                          | true            |
 | DB_MIGRATIONS_RUN          | Automatically run migrations at startup.                                                                                                                        | true            |
+| DB_LOGGING                 | Enable query logging for TypeORM. Allowed: true, false, "true", "false", 1, 0. Useful for debugging database queries in development.                            | false           |
 | SCHEDULE_TASK_CLEANUP_CRON | **Optional.** Cron expression for scheduled task cleanup. Format: second minute hour day month weekday. If not provided, the cleanup job will not be scheduled. | _Not set_       |
 | JWT_SECRET                 | Secret key used to sign JWT tokens for authentication. Store this value in a secure location.                                                                   | your-secret-key |
 | JWT_EXPIRES_IN             | JWT token expiration time (e.g., "1h", "30m").                                                                                                                  | 1h              |
@@ -138,6 +139,8 @@ DB_SSL=false
 # DB_HOST_READ_ONLY=read-replica.localhost
 # DB_MIGRATIONS_RUN: Automatically run migrations on startup (true/false) Default: true
 DB_MIGRATIONS_RUN=true
+# DB_LOGGING: Enable query logging for TypeORM (true/false) Default: false
+DB_LOGGING=false
 
 # Scheduled Task Settings
 # Cron expression for task cleanup schedule (OPTIONAL)

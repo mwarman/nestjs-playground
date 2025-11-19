@@ -11,6 +11,7 @@ import {
   DEFAULT_DB_USER,
   DEFAULT_DB_PASS,
   DEFAULT_DB_DATABASE,
+  DEFAULT_DB_LOGGING,
 } from './configuration';
 
 describe('Configuration', () => {
@@ -40,6 +41,7 @@ describe('Configuration', () => {
         DB_DATABASE: DEFAULT_DB_DATABASE,
         DB_MIGRATIONS_RUN: true,
         DB_SSL: true,
+        DB_LOGGING: DEFAULT_DB_LOGGING,
       });
       expect(result).not.toHaveProperty('APP_VERSION');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
@@ -69,6 +71,7 @@ describe('Configuration', () => {
         DB_DATABASE: DEFAULT_DB_DATABASE,
         DB_MIGRATIONS_RUN: true,
         DB_SSL: true,
+        DB_LOGGING: DEFAULT_DB_LOGGING,
       });
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
     });
@@ -97,6 +100,7 @@ describe('Configuration', () => {
         DB_DATABASE: DEFAULT_DB_DATABASE,
         DB_MIGRATIONS_RUN: true,
         DB_SSL: true,
+        DB_LOGGING: DEFAULT_DB_LOGGING,
       });
       expect(typeof result.APP_PORT).toBe('number');
       expect(result).not.toHaveProperty('SCHEDULE_TASK_CLEANUP_CRON');
@@ -243,6 +247,7 @@ describe('Configuration', () => {
         DB_DATABASE: DEFAULT_DB_DATABASE,
         DB_MIGRATIONS_RUN: true,
         DB_SSL: true,
+        DB_LOGGING: DEFAULT_DB_LOGGING,
       });
       expect(result).not.toHaveProperty('EXTRA_PROPERTY');
       expect(result).not.toHaveProperty('ANOTHER_EXTRA');

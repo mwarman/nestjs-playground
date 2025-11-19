@@ -51,7 +51,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsRun: configService.get('DB_MIGRATIONS_RUN'), // Automatically run migrations on startup
         synchronize: false, // Set to false in production, use migrations instead
-        logging: true,
+        logging: configService.get('DB_LOGGING'),
         extra: {
           min: 5, // minimum number of clients in the pool
           max: 10, // maximum number of clients in the pool
@@ -76,7 +76,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
           ssl: configService.get('DB_SSL') ? { rejectUnauthorized: false } : false,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: false,
-          logging: true,
+          logging: configService.get('DB_LOGGING'),
           extra: {
             min: 5,
             max: 10,
