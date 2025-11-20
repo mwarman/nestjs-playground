@@ -1,3 +1,7 @@
+/**
+ * Main application module
+ * Configures global modules, database connections, and imports feature modules.
+ */
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -6,11 +10,13 @@ import { LoggerModule } from 'nestjs-pino';
 import { CacheModule } from '@nestjs/cache-manager';
 
 import { validate } from './config/configuration';
+import { CoreModule } from './modules/core/core.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
+import { TypeOrmLoggerService } from './modules/core/typeorm-logger.service';
 
 @Module({
   imports: [
@@ -37,9 +43,10 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
     }),
     CacheModule.register({ isGlobal: true, ttl: 5000 }), // Cache for 5 seconds by default
     ScheduleModule.forRoot(),
+    CoreModule,
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule, LoggerModule],
-      useFactory: (configService: ConfigService) => ({
+      imports: [ConfigModule, CoreModule],
+      useFactory: (configService: ConfigService, typeOrmLogger: TypeOrmLoggerService) => ({
         type: 'postgres',
         host: configService.get('DB_HOST'),
         port: configService.get('DB_PORT'),
@@ -52,6 +59,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
         migrationsRun: configService.get('DB_MIGRATIONS_RUN'), // Automatically run migrations on startup
         synchronize: false, // Set to false in production, use migrations instead
         logging: configService.get('DB_LOGGING'),
+        logger: typeOrmLogger,
         extra: {
           min: 5, // minimum number of clients in the pool
           max: 10, // maximum number of clients in the pool
@@ -59,12 +67,12 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
           connectionTimeoutMillis: 10000, // return an error after 10 seconds if connection could not be established
         },
       }),
-      inject: [ConfigService],
+      inject: [ConfigService, TypeOrmLoggerService],
     }),
     TypeOrmModule.forRootAsync({
       name: 'read-only',
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
+      imports: [ConfigModule, CoreModule],
+      useFactory: (configService: ConfigService, typeOrmLogger: TypeOrmLoggerService) => {
         const readOnlyHost = configService.get<string>('DB_HOST_READ_ONLY') || configService.get<string>('DB_HOST')!;
         return {
           type: 'postgres',
@@ -77,6 +85,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: false,
           logging: configService.get('DB_LOGGING'),
+          logger: typeOrmLogger,
           extra: {
             min: 5,
             max: 10,
@@ -85,7 +94,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
           },
         };
       },
-      inject: [ConfigService],
+      inject: [ConfigService, TypeOrmLoggerService],
     }),
     TasksModule,
     HealthModule,
