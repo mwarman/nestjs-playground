@@ -10,6 +10,7 @@ export const DEFAULT_DB_PORT = 5432;
 export const DEFAULT_DB_USER = 'nestuser';
 export const DEFAULT_DB_PASS = 'nestpassword';
 export const DEFAULT_DB_DATABASE = 'nestdb';
+export const DEFAULT_DB_LOGGING = false;
 
 const configSchema = z.object({
   APP_VERSION: z.string().optional(),
@@ -48,6 +49,13 @@ const configSchema = z.object({
     }
     return val;
   }, z.boolean().default(true)),
+  DB_LOGGING: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      if (val.toLowerCase() === 'false' || val === '0') return false;
+      if (val.toLowerCase() === 'true' || val === '1') return true;
+    }
+    return val;
+  }, z.boolean().default(DEFAULT_DB_LOGGING)),
   SCHEDULE_TASK_CLEANUP_CRON: z.string().optional(),
 });
 

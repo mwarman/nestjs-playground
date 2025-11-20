@@ -10,6 +10,7 @@ applyTo: '**/*.spec.ts,**/*.test.ts'
   - **Arrange:** Set up the test environment, including any necessary mocks and test data.
   - **Act:** Execute the function or service being tested.
   - **Assert:** Verify that the results are as expected.
+  - Add comments to separate these sections for clarity.
 
 ## Mocks & Spies
 
