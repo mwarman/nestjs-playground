@@ -34,6 +34,8 @@ describe('TasksController', () => {
       isComplete: false,
       userId: 'test-user-id',
       user: mockUser,
+      taskPriorityCode: 'HIGH',
+      taskPriority: { code: 'HIGH', label: 'High Priority', description: 'High priority tasks', ordinal: 1 },
       createdAt: new Date('2025-09-01T08:00:00.000Z'),
       updatedAt: new Date('2025-09-02T09:30:00.000Z'),
     },
@@ -45,6 +47,8 @@ describe('TasksController', () => {
       isComplete: true,
       userId: 'test-user-id',
       user: mockUser,
+      taskPriorityCode: 'MEDIUM',
+      taskPriority: { code: 'MEDIUM', label: 'Medium Priority', description: 'Medium priority tasks', ordinal: 2 },
       createdAt: new Date('2025-09-02T08:00:00.000Z'),
       updatedAt: new Date('2025-09-02T08:00:00.000Z'),
     },
@@ -174,6 +178,46 @@ describe('TasksController', () => {
       expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, undefined, 20);
       expect(result).toEqual(mockTasks);
     });
+
+    it('should return Task array when page is not provided', async () => {
+      // Arrange
+      const query = {};
+      mockTasksService.findAll.mockResolvedValueOnce(mockTasks);
+
+      // Act
+      const result = await controller.findAll(query, userId);
+
+      // Assert
+      expect(Array.isArray(result)).toBe(true);
+      expect((result as Task[]).length).toBe(2);
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, undefined, undefined);
+    });
+
+    it('should return Paginated<Task> when page is provided', async () => {
+      // Arrange
+      const query = { page: 1, pageSize: 10 };
+      const paginatedResponse: Paginated<Task> = {
+        data: [mockTasks[0]],
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+          totalItems: 1,
+        },
+      };
+      mockTasksService.findAll.mockResolvedValueOnce(paginatedResponse);
+
+      // Act
+      const result = await controller.findAll(query, userId);
+
+      // Assert
+      expect((result as Paginated<Task>).data).toBeDefined();
+      expect((result as Paginated<Task>).pagination).toBeDefined();
+      expect((result as Paginated<Task>).pagination.page).toBe(1);
+      expect((result as Paginated<Task>).pagination.pageSize).toBe(10);
+      expect((result as Paginated<Task>).pagination.totalPages).toBe(1);
+      expect((result as Paginated<Task>).pagination.totalItems).toBe(1);
+    });
   });
 
   describe('findOne', () => {
@@ -215,6 +259,7 @@ describe('TasksController', () => {
         description: 'Detailed description',
         dueAt: '2025-09-15T10:00:00.000Z',
         isComplete: false,
+        taskPriorityCode: 'HIGH',
       };
 
       const expectedTask: Task = {
@@ -225,6 +270,8 @@ describe('TasksController', () => {
         isComplete: false,
         userId: 'test-user-id',
         user: mockUser,
+        taskPriorityCode: 'HIGH',
+        taskPriority: { code: 'HIGH', label: 'High Priority', description: 'High priority tasks', ordinal: 1 },
         createdAt: new Date('2025-09-12T08:00:00.000Z'),
         updatedAt: new Date('2025-09-12T08:00:00.000Z'),
       };
@@ -243,6 +290,7 @@ describe('TasksController', () => {
       // Arrange
       const createTaskDto: CreateTaskDto = {
         summary: 'Minimal test task',
+        taskPriorityCode: 'MEDIUM',
       };
 
       const expectedTask: Task = {
@@ -253,6 +301,8 @@ describe('TasksController', () => {
         isComplete: false,
         userId: 'test-user-id',
         user: mockUser,
+        taskPriorityCode: 'MEDIUM',
+        taskPriority: { code: 'MEDIUM', label: 'Medium Priority', description: 'Medium priority tasks', ordinal: 2 },
         createdAt: new Date('2025-09-12T08:00:00.000Z'),
         updatedAt: new Date('2025-09-12T08:00:00.000Z'),
       };
@@ -272,6 +322,7 @@ describe('TasksController', () => {
       const createTaskDto: CreateTaskDto = {
         summary: 'Task without isComplete',
         description: 'Some description',
+        taskPriorityCode: 'LOW',
       };
 
       const expectedTask: Task = {
@@ -282,6 +333,8 @@ describe('TasksController', () => {
         isComplete: false,
         userId: 'test-user-id',
         user: mockUser,
+        taskPriorityCode: 'LOW',
+        taskPriority: { code: 'LOW', label: 'Low Priority', description: 'Low priority tasks', ordinal: 3 },
         createdAt: new Date('2025-09-12T08:00:00.000Z'),
         updatedAt: new Date('2025-09-12T08:00:00.000Z'),
       };
@@ -300,6 +353,7 @@ describe('TasksController', () => {
       // Arrange
       const createTaskDto: CreateTaskDto = {
         summary: 'Task that will fail',
+        taskPriorityCode: 'HIGH',
       };
 
       const serviceError = new Error('Database connection failed');
@@ -333,6 +387,8 @@ describe('TasksController', () => {
         isComplete: updateTaskDto.isComplete!,
         userId: 'test-user-id',
         user: mockUser,
+        taskPriorityCode: 'HIGH',
+        taskPriority: { code: 'HIGH', label: 'High Priority', description: 'High priority tasks', ordinal: 1 },
         createdAt: new Date('2025-09-01T08:00:00.000Z'),
         updatedAt: new Date('2025-09-13T10:00:00.000Z'),
       };
@@ -364,6 +420,8 @@ describe('TasksController', () => {
         isComplete: false,
         userId: 'test-user-id',
         user: mockUser,
+        taskPriorityCode: 'HIGH',
+        taskPriority: { code: 'HIGH', label: 'High Priority', description: 'High priority tasks', ordinal: 1 },
         createdAt: new Date('2025-09-01T08:00:00.000Z'),
         updatedAt: new Date('2025-09-13T10:00:00.000Z'),
       };
