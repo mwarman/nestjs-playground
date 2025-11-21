@@ -5,6 +5,7 @@ import type { Task } from './entities/task.entity';
 import type { CreateTaskDto } from './dto/create-task.dto';
 import type { UpdateTaskDto } from './dto/update-task.dto';
 import type { User } from '../users/entities/user.entity';
+import type { Paginated } from '../../common/types/paginated.type';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 
@@ -89,28 +90,89 @@ describe('TasksController', () => {
   describe('findAll', () => {
     const userId = 'test-user-id';
 
-    it('should return an array of tasks', async () => {
+    it('should return an array of tasks when no pagination parameters are provided', async () => {
       // Arrange
-      // Mock setup completed in beforeEach
+      const query = {};
 
       // Act
-      const result = await controller.findAll(userId);
+      const result = await controller.findAll(query, userId);
 
       // Assert
-      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId);
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, undefined, undefined);
       expect(result).toEqual(mockTasks);
     });
 
     it('should return empty array when no tasks exist', async () => {
       // Arrange
+      const query = {};
       mockTasksService.findAll.mockResolvedValueOnce([]);
 
       // Act
-      const result = await controller.findAll(userId);
+      const result = await controller.findAll(query, userId);
 
       // Assert
-      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId);
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, undefined, undefined);
       expect(result).toEqual([]);
+    });
+
+    it('should return paginated tasks when page parameter is provided', async () => {
+      // Arrange
+      const query = { page: 1 };
+      const paginatedResponse: Paginated<Task> = {
+        data: [mockTasks[0]],
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalPages: 1,
+          totalItems: 1,
+        },
+      };
+      mockTasksService.findAll.mockResolvedValueOnce(paginatedResponse);
+
+      // Act
+      const result = await controller.findAll(query, userId);
+
+      // Assert
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, 1, undefined);
+      expect(result).toEqual(paginatedResponse);
+      expect((result as Paginated<Task>).pagination).toBeDefined();
+      expect((result as Paginated<Task>).pagination.page).toBe(1);
+      expect((result as Paginated<Task>).pagination.totalItems).toBe(1);
+    });
+
+    it('should return paginated tasks with custom page size when both parameters are provided', async () => {
+      // Arrange
+      const query = { page: 2, pageSize: 5 };
+      const paginatedResponse: Paginated<Task> = {
+        data: [mockTasks[1]],
+        pagination: {
+          page: 2,
+          pageSize: 5,
+          totalPages: 1,
+          totalItems: 2,
+        },
+      };
+      mockTasksService.findAll.mockResolvedValueOnce(paginatedResponse);
+
+      // Act
+      const result = await controller.findAll(query, userId);
+
+      // Assert
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, 2, 5);
+      expect(result).toEqual(paginatedResponse);
+      expect((result as Paginated<Task>).pagination.pageSize).toBe(5);
+    });
+
+    it('should pass pageSize without page when only pageSize is provided', async () => {
+      // Arrange
+      const query = { pageSize: 20 };
+
+      // Act
+      const result = await controller.findAll(query, userId);
+
+      // Assert
+      expect(mockTasksService.findAll).toHaveBeenCalledWith(userId, undefined, 20);
+      expect(result).toEqual(mockTasks);
     });
   });
 

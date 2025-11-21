@@ -8,7 +8,7 @@ import { Task } from './entities/task.entity';
 import { ReferenceDataModule } from '../reference-data/reference-data.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Task]), ReferenceDataModule],
+  imports: [TypeOrmModule.forFeature([Task]), TypeOrmModule.forFeature([Task], 'read-only'), ReferenceDataModule],
   controllers: [TasksController],
   providers: [TasksService, TasksSchedulerService],
 })
