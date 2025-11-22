@@ -7,6 +7,7 @@ import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskPriorityService } from '../reference-data/task-priority.service';
+import type { Paginated } from '../../common/types/paginated.type';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -53,6 +54,12 @@ describe('TasksService', () => {
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
+  const mockRepositoryReadOnly = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    findAndCount: jest.fn(),
+  };
+
   const mockTaskPriorityService = {
     findOne: jest.fn(),
   };
@@ -64,6 +71,10 @@ describe('TasksService', () => {
         {
           provide: getRepositoryToken(Task),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Task, 'read-only'),
+          useValue: mockRepositoryReadOnly,
         },
         {
           provide: TaskPriorityService,
@@ -86,26 +97,26 @@ describe('TasksService', () => {
   describe('findAll', () => {
     const userId = 'user-123';
 
-    it('should return an array of tasks for a specific user', async () => {
+    it('should return an array of all tasks for a specific user when no pagination parameters provided', async () => {
       // Arrange
-      mockRepository.find.mockResolvedValue(mockTasks);
+      mockRepositoryReadOnly.find.mockResolvedValue(mockTasks);
 
       // Act
       const result = await service.findAll(userId);
 
       // Assert
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
-      expect(mockRepository.find).toHaveBeenCalledWith({ where: { userId } });
+      expect((result as Task[]).length).toBeGreaterThan(0);
+      expect(mockRepositoryReadOnly.find).toHaveBeenCalledWith({ where: { userId } });
     });
 
     it('should return tasks with correct structure', async () => {
       // Arrange
-      mockRepository.find.mockResolvedValue(mockTasks);
+      mockRepositoryReadOnly.find.mockResolvedValue(mockTasks);
 
       // Act
       const result = await service.findAll(userId);
-      const task = result[0];
+      const task = (result as Task[])[0];
 
       // Assert
       expect(task).toHaveProperty('id');
@@ -116,6 +127,97 @@ describe('TasksService', () => {
       expect(typeof task.summary).toBe('string');
       expect(typeof task.isComplete).toBe('boolean');
     });
+
+    it('should return paginated response when page parameter is provided', async () => {
+      // Arrange
+      const page = 1;
+      const pageSize = 10;
+      mockRepositoryReadOnly.findAndCount.mockResolvedValue([[mockTasks[0]], 25]);
+
+      // Act
+      const result = await service.findAll(userId, page, pageSize);
+
+      // Assert
+      expect(mockRepositoryReadOnly.findAndCount).toHaveBeenCalledWith({
+        where: { userId },
+        skip: 0,
+        take: 10,
+      });
+      expect((result as Paginated<Task>).data).toEqual([mockTasks[0]]);
+      expect((result as Paginated<Task>).pagination).toEqual({
+        page: 1,
+        pageSize: 10,
+        totalPages: 3,
+        totalItems: 25,
+      });
+    });
+
+    it('should use default page size of 10 when page is provided but pageSize is not', async () => {
+      // Arrange
+      const page = 1;
+      mockRepositoryReadOnly.findAndCount.mockResolvedValue([[mockTasks[0]], 10]);
+
+      // Act
+      const result = await service.findAll(userId, page);
+
+      // Assert
+      expect(mockRepositoryReadOnly.findAndCount).toHaveBeenCalledWith({
+        where: { userId },
+        skip: 0,
+        take: 10,
+      });
+      expect((result as Paginated<Task>).pagination.pageSize).toBe(10);
+    });
+
+    it('should calculate correct skip value for page 2', async () => {
+      // Arrange
+      const page = 2;
+      const pageSize = 5;
+      mockRepositoryReadOnly.findAndCount.mockResolvedValue([[mockTasks[1]], 10]);
+
+      // Act
+      const result = await service.findAll(userId, page, pageSize);
+
+      // Assert
+      expect(mockRepositoryReadOnly.findAndCount).toHaveBeenCalledWith({
+        where: { userId },
+        skip: 5,
+        take: 5,
+      });
+      expect((result as Paginated<Task>).pagination.page).toBe(2);
+      expect((result as Paginated<Task>).pagination.totalPages).toBe(2);
+    });
+
+    it('should calculate correct skip value for page 3 with custom page size', async () => {
+      // Arrange
+      const page = 3;
+      const pageSize = 20;
+      mockRepositoryReadOnly.findAndCount.mockResolvedValue([[], 50]);
+
+      // Act
+      const result = await service.findAll(userId, page, pageSize);
+
+      // Assert
+      expect(mockRepositoryReadOnly.findAndCount).toHaveBeenCalledWith({
+        where: { userId },
+        skip: 40,
+        take: 20,
+      });
+      expect((result as Paginated<Task>).pagination.totalPages).toBe(3);
+    });
+
+    it('should return all tasks when page is undefined regardless of pageSize', async () => {
+      // Arrange
+      const pageSize = 5;
+      mockRepositoryReadOnly.find.mockResolvedValue(mockTasks);
+
+      // Act
+      const result = await service.findAll(userId, undefined, pageSize);
+
+      // Assert
+      expect(mockRepositoryReadOnly.find).toHaveBeenCalledWith({ where: { userId } });
+      expect(result).toEqual(mockTasks);
+    });
   });
 
   describe('findOne', () => {
@@ -124,20 +226,20 @@ describe('TasksService', () => {
     it('should return a task when valid ID is provided', async () => {
       // Arrange
       const existingTask = mockTasks[0];
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
 
       // Act
       const result = await service.findOne(existingTask.id, userId);
 
       // Assert
       expect(result).toEqual(existingTask);
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: existingTask.id, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: existingTask.id, userId } });
     });
 
     it('should throw NotFoundException when task is not found', async () => {
       // Arrange
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(null);
 
       // Act & Assert
       await expect(service.findOne(nonExistentId, userId)).rejects.toThrow(NotFoundException);
@@ -148,7 +250,7 @@ describe('TasksService', () => {
       // Arrange
       const existingTask = mockTasks[0];
       const taskId = existingTask.id;
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
 
       // Act
       const result = await service.findOne(taskId, userId);
@@ -345,17 +447,17 @@ describe('TasksService', () => {
         taskPriorityCode: updateTaskDto.taskPriorityCode!,
       };
 
-      mockRepository.findOne.mockResolvedValueOnce(existingTask); // First call to verify task exists
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(existingTask); // First call to verify task exists
       mockRepository.update.mockResolvedValue({ affected: 1 });
-      mockRepository.findOne.mockResolvedValueOnce(updatedTask); // Second call to return updated task
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(updatedTask); // Second call to return updated task
       mockTaskPriorityService.findOne.mockResolvedValue({ code: 'LOW', label: 'Low Priority' });
 
       // Act
       const result = await service.update(taskId, updateTaskDto, userId);
 
       // Assert
-      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
-      expect(mockRepository.findOne).toHaveBeenNthCalledWith(1, { where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledTimes(2);
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenNthCalledWith(1, { where: { id: taskId, userId } });
       expect(mockTaskPriorityService.findOne).toHaveBeenCalledWith('LOW');
       expect(mockRepository.update).toHaveBeenCalledWith(
         { id: taskId, userId },
@@ -367,7 +469,7 @@ describe('TasksService', () => {
           taskPriorityCode: updateTaskDto.taskPriorityCode,
         },
       );
-      expect(mockRepository.findOne).toHaveBeenNthCalledWith(2, { where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenNthCalledWith(2, { where: { id: taskId, userId } });
       expect(result).toEqual(updatedTask);
     });
 
@@ -385,15 +487,15 @@ describe('TasksService', () => {
         summary: updateTaskDto.summary!,
       };
 
-      mockRepository.findOne.mockResolvedValueOnce(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(existingTask);
       mockRepository.update.mockResolvedValue({ affected: 1 });
-      mockRepository.findOne.mockResolvedValueOnce(updatedTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(updatedTask);
 
       // Act
       const result = await service.update(taskId, updateTaskDto, userId);
 
       // Assert
-      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledTimes(2);
       expect(mockRepository.update).toHaveBeenCalledWith(
         { id: taskId, userId },
         {
@@ -418,9 +520,9 @@ describe('TasksService', () => {
         dueAt: new Date(updateTaskDto.dueAt!),
       };
 
-      mockRepository.findOne.mockResolvedValueOnce(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(existingTask);
       mockRepository.update.mockResolvedValue({ affected: 1 });
-      mockRepository.findOne.mockResolvedValueOnce(updatedTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(updatedTask);
 
       // Act
       const result = await service.update(taskId, updateTaskDto, userId);
@@ -450,9 +552,9 @@ describe('TasksService', () => {
         summary: updateTaskDto.summary!,
       };
 
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
       mockRepository.update.mockResolvedValue({ affected: 1, generatedMaps: [], raw: [] });
-      mockRepository.findOne
+      mockRepositoryReadOnly.findOne
         .mockResolvedValueOnce(existingTask) // First call to check existence
         .mockResolvedValueOnce(updatedTask); // Second call to return updated task
 
@@ -471,11 +573,11 @@ describe('TasksService', () => {
         summary: 'Updated summary',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(null);
 
       // Act & Assert
       await expect(service.update(nonExistentId, updateTaskDto, userId)).rejects.toThrow(NotFoundException);
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: nonExistentId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: nonExistentId, userId } });
       expect(mockRepository.update).not.toHaveBeenCalled();
     });
 
@@ -490,12 +592,12 @@ describe('TasksService', () => {
 
       const updateError = new Error('Database update failed');
 
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
       mockRepository.update.mockRejectedValue(updateError);
 
       // Act & Assert
       await expect(service.update(taskId, updateTaskDto, userId)).rejects.toThrow('Database update failed');
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
       expect(mockRepository.update).toHaveBeenCalled();
     });
 
@@ -509,7 +611,7 @@ describe('TasksService', () => {
         taskPriorityCode: 'INVALID_PRIORITY',
       };
 
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
       mockTaskPriorityService.findOne.mockRejectedValue(new NotFoundException('TaskPriority not found'));
 
       // Act & Assert
@@ -517,7 +619,7 @@ describe('TasksService', () => {
       await expect(service.update(taskId, updateTaskDto, userId)).rejects.toThrow(
         'Invalid task priority code: INVALID_PRIORITY',
       );
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
       expect(mockTaskPriorityService.findOne).toHaveBeenCalledWith('INVALID_PRIORITY');
       expect(mockRepository.update).not.toHaveBeenCalled();
     });
@@ -536,9 +638,9 @@ describe('TasksService', () => {
         summary: updateTaskDto.summary!,
       };
 
-      mockRepository.findOne.mockResolvedValueOnce(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(existingTask);
       mockRepository.update.mockResolvedValue({ affected: 1 });
-      mockRepository.findOne.mockResolvedValueOnce(updatedTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValueOnce(updatedTask);
 
       // Act
       const result = await service.update(taskId, updateTaskDto, userId);
@@ -566,14 +668,14 @@ describe('TasksService', () => {
       // Arrange
       const taskId = '550e8400-e29b-41d4-a716-446655440001';
       const existingTask = mockTasks[0];
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
       mockRepository.remove.mockResolvedValue(existingTask);
 
       // Act
       const result = await service.remove(taskId, userId);
 
       // Assert
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
       expect(mockRepository.remove).toHaveBeenCalledWith(existingTask);
       expect(result).toBeUndefined();
     });
@@ -581,12 +683,12 @@ describe('TasksService', () => {
     it('should throw NotFoundException when task to remove does not exist', async () => {
       // Arrange
       const taskId = '00000000-0000-0000-0000-000000000000';
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(null);
 
       // Act & Assert
       await expect(service.remove(taskId, userId)).rejects.toThrow(NotFoundException);
       await expect(service.remove(taskId, userId)).rejects.toThrow(`Task with ID ${taskId} not found`);
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
       expect(mockRepository.remove).not.toHaveBeenCalled();
     });
 
@@ -595,12 +697,12 @@ describe('TasksService', () => {
       const taskId = '550e8400-e29b-41d4-a716-446655440001';
       const existingTask = mockTasks[0];
       const removeError = new Error('Database removal failed');
-      mockRepository.findOne.mockResolvedValue(existingTask);
+      mockRepositoryReadOnly.findOne.mockResolvedValue(existingTask);
       mockRepository.remove.mockRejectedValue(removeError);
 
       // Act & Assert
       await expect(service.remove(taskId, userId)).rejects.toThrow('Database removal failed');
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
+      expect(mockRepositoryReadOnly.findOne).toHaveBeenCalledWith({ where: { id: taskId, userId } });
       expect(mockRepository.remove).toHaveBeenCalledWith(existingTask);
     });
   });

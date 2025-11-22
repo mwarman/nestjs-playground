@@ -6,6 +6,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
 import { TaskPriorityService } from '../reference-data/task-priority.service';
+import { Paginated } from '../../common/types/paginated.type';
 
 @Injectable()
 export class TasksService {
@@ -14,20 +15,56 @@ export class TasksService {
   constructor(
     @InjectRepository(Task)
     private readonly taskRepository: Repository<Task>,
+    @InjectRepository(Task, 'read-only')
+    private readonly taskRepositoryReadOnly: Repository<Task>,
     private readonly taskPriorityService: TaskPriorityService,
   ) {}
 
-  async findAll(userId: string): Promise<Task[]> {
-    this.logger.log(`> findAll: userId=${userId}`);
-    const tasks = await this.taskRepository.find({ where: { userId } });
-    this.logger.debug(`findAll: returning ${tasks.length} tasks for user ${userId}`);
-    this.logger.log(`< findAll: userId=${userId}`);
-    return tasks;
+  async findAll(userId: string, page?: number, pageSize?: number): Promise<Task[] | Paginated<Task>> {
+    this.logger.log(`> findAll: userId=${userId}, page=${page}, pageSize=${pageSize}`);
+
+    // If page is not provided, return all tasks (existing behavior)
+    if (page === undefined) {
+      const tasks = await this.taskRepositoryReadOnly.find({ where: { userId } });
+      this.logger.debug(`findAll: returning ${tasks.length} tasks for user ${userId}`);
+      this.logger.log(`< findAll: userId=${userId}`);
+      return tasks;
+    }
+
+    // Page is provided, so return paginated results
+    // Default page size to 10 if not provided
+    const effectivePageSize = pageSize ?? 10;
+    const skip = (page - 1) * effectivePageSize;
+
+    // Get total count for pagination metadata
+    const [tasks, totalItems] = await this.taskRepositoryReadOnly.findAndCount({
+      where: { userId },
+      skip,
+      take: effectivePageSize,
+    });
+
+    const totalPages = Math.ceil(totalItems / effectivePageSize);
+
+    const result: Paginated<Task> = {
+      data: tasks,
+      pagination: {
+        page,
+        pageSize: effectivePageSize,
+        totalPages,
+        totalItems,
+      },
+    };
+
+    this.logger.debug(
+      `findAll: returning ${tasks.length} tasks for user ${userId} (page ${page}, pageSize ${effectivePageSize}, totalItems ${totalItems}, totalPages ${totalPages})`,
+    );
+    this.logger.log(`< findAll: userId=${userId}, page=${page}, pageSize=${pageSize}`);
+    return result;
   }
 
   async findOne(id: string, userId: string): Promise<Task> {
     this.logger.log(`> findOne: ${id}, userId=${userId}`);
-    const task = await this.taskRepository.findOne({ where: { id, userId } });
+    const task = await this.taskRepositoryReadOnly.findOne({ where: { id, userId } });
     this.logger.debug(`findOne: ${id} found: ${!!task} for user ${userId}`);
 
     if (!task) {

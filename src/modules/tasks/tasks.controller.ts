@@ -10,6 +10,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
@@ -28,8 +29,10 @@ import { AuthUser } from '../auth/decorators/auth-user.decorator';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetTaskParamsDto } from './dto/get-task-params.dto';
+import { GetTasksQueryDto } from './dto/get-tasks-query.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
+import { Paginated } from '../../common/types/paginated.type';
 
 @ApiTags('Tasks')
 @ApiBearerAuth()
@@ -56,11 +59,17 @@ export class TasksController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Fetch all tasks' })
-  @ApiResponse({ status: 200, description: 'List of all tasks for the authenticated user', type: [Task] })
-  async findAll(@AuthUser('id') userId: string): Promise<Task[]> {
+  @ApiOperation({ summary: 'Fetch all tasks or a paginated list of tasks' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all tasks for the authenticated user, or a paginated response if page parameter is provided',
+  })
+  async findAll(
+    @Query(new ValidationPipe({ transform: true })) query: GetTasksQueryDto,
+    @AuthUser('id') userId: string,
+  ): Promise<Task[] | Paginated<Task>> {
     this.logger.log('> findAll');
-    const tasks = await this.tasksService.findAll(userId);
+    const tasks = await this.tasksService.findAll(userId, query.page, query.pageSize);
     this.logger.log('< findAll');
     return tasks;
   }

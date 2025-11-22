@@ -3,6 +3,18 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { JwtPayloadDto } from '../dto/jwt-payload.dto';
 
 /**
+ * Factory function that extracts the authenticated user from the execution context.
+ * @internal
+ */
+export const authUserFactory = (data: keyof JwtPayloadDto | undefined, ctx: ExecutionContext) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const request = ctx.switchToHttp().getRequest();
+  const user = request.user as JwtPayloadDto;
+
+  return data ? user?.[data] : user;
+};
+
+/**
  * Custom decorator to extract the authenticated user from the request.
  * This decorator retrieves the user information from the JWT payload
  * that has been validated and attached to the request by the JWT strategy.
@@ -23,10 +35,4 @@ import { JwtPayloadDto } from '../dto/jwt-payload.dto';
  * }
  * ```
  */
-export const AuthUser = createParamDecorator((data: keyof JwtPayloadDto, ctx: ExecutionContext) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const request = ctx.switchToHttp().getRequest();
-  const user = request.user as JwtPayloadDto;
-
-  return data ? user?.[data] : user;
-});
+export const AuthUser = createParamDecorator(authUserFactory);
