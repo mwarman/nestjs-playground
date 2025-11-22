@@ -1,3 +1,10 @@
+/**
+ * Tasks Module
+ *
+ * This module handles all task-related functionalities, including task creation,
+ * management, and scheduling. It integrates with the Reference Data Module for
+ * additional data requirements.
+ */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 

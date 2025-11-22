@@ -106,7 +106,7 @@ describe('TasksService', () => {
 
       // Assert
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThan(0);
+      expect((result as Task[]).length).toBeGreaterThan(0);
       expect(mockRepositoryReadOnly.find).toHaveBeenCalledWith({ where: { userId } });
     });
 
