@@ -36,7 +36,6 @@ describe('AuthUser', () => {
 
   it('should return the entire user object when no property is specified', () => {
     // Arrange & Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory(undefined, mockExecutionContext);
 
     // Assert
@@ -48,7 +47,6 @@ describe('AuthUser', () => {
 
   it('should return specific property when property name is provided', () => {
     // Arrange & Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory('id', mockExecutionContext);
 
     // Assert
@@ -57,7 +55,6 @@ describe('AuthUser', () => {
 
   it('should return username when username property is specified', () => {
     // Arrange & Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory('username', mockExecutionContext);
 
     // Assert
@@ -66,7 +63,6 @@ describe('AuthUser', () => {
 
   it('should return sub when sub property is specified', () => {
     // Arrange & Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory('sub', mockExecutionContext);
 
     // Assert
@@ -78,7 +74,6 @@ describe('AuthUser', () => {
     mockRequest.user = undefined;
 
     // Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory(undefined, mockExecutionContext);
 
     // Assert
@@ -90,7 +85,6 @@ describe('AuthUser', () => {
     mockRequest.user = undefined;
 
     // Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result = authUserFactory('id', mockExecutionContext);
 
     // Assert
@@ -127,13 +121,8 @@ describe('AuthUser', () => {
     } as JwtPayloadDto;
 
     // Act
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resultUser = authUserFactory(undefined, mockExecutionContext);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resultId = authUserFactory('id', mockExecutionContext);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const resultUsername = authUserFactory('username', mockExecutionContext);
 
     // Assert
