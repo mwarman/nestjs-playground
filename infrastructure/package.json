@@ -1,6 +1,6 @@
 {
   "name": "nestjs-playground-infrastructure",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "AWS CDK infrastructure for NestJS Playground application",
   "private": true,
   "scripts": {
@@ -19,7 +19,7 @@
     "bootstrap": "cdk bootstrap"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.225.0",
+    "aws-cdk-lib": "2.227.0",
     "constructs": "10.4.3",
     "dotenv": "17.2.3",
     "zod": "4.1.12"
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/jest": "30.0.0",
     "@types/node": "24.10.1",
-    "aws-cdk": "2.1032.0",
+    "aws-cdk": "2.1033.0",
     "jest": "30.2.0",
     "ts-jest": "29.4.5",
     "typescript": "5.9.3"
